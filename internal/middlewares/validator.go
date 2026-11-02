@@ -72,6 +72,15 @@ func validateShareID(value string) bool {
 	return allowedShareID.MatchString(value)
 }
 
+// allowedSlugChars keeps public URL segments readable and unambiguous:
+// lowercase alphanumerics separated by single hyphens, no leading or
+// trailing hyphen.
+var allowedSlugChars = regexp.MustCompile(`^[a-z0-9]+(?:-[a-z0-9]+)*$`)
+
+func validateSlug(fl validator.FieldLevel) bool {
+	return allowedSlugChars.MatchString(fl.Field().String())
+}
+
 func validationErrorCode(fe validator.FieldError) string {
 	switch fe.Tag() {
 	case "required", "required_if", "required_with":
@@ -90,6 +99,8 @@ func validationErrorCode(fe validator.FieldError) string {
 		return apierrors.CodeInvalidUUID
 	case "email":
 		return apierrors.CodeInvalidEmail
+	case "slug":
+		return apierrors.CodeInvalidSlug
 	default:
 		return apierrors.CodeInvalidValue
 	}
@@ -117,6 +128,7 @@ func Validate[T any](next http.Handler) http.Handler {
 		_ = validate.RegisterValidation("maxuploadsize", validateMaxUploadSize)
 		_ = validate.RegisterValidation("futuredate", validateFutureDate)
 		_ = validate.RegisterValidation("sharecustomid", validateShareCustomID)
+		_ = validate.RegisterValidation("slug", validateSlug)
 
 		err = validate.Struct(data)
 		if err != nil {

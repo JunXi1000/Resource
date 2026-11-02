@@ -17,11 +17,28 @@ const (
 	FileStatusRestoring FileStatus = "restoring"
 )
 
+// ReviewStatus is deliberately kept separate from FileStatus. FileStatus
+// tracks the upload lifecycle and is consumed by the upload state machine
+// (CheckFileUploadable, cleanup workers, trash); mixing moderation states
+// into it would break those transitions. ReviewStatus only decides whether a
+// file is visible in the anonymous catalog.
+type ReviewStatus string
+
+const (
+	ReviewStatusPending  ReviewStatus = "pending"
+	ReviewStatusApproved ReviewStatus = "approved"
+	ReviewStatusRejected ReviewStatus = "rejected"
+)
+
 type File struct {
 	ID               uuid.UUID      `gorm:"default:(-)"           json:"id"`
 	Name             string         `gorm:"not null;default:null" json:"name"`
 	Extension        string         `gorm:"default:null"          json:"extension"`
 	Status           FileStatus     `gorm:"default:null"          json:"status"`
+	ReviewStatus     ReviewStatus   `gorm:"not null;default:approved" json:"review_status"`
+	ReviewedBy       *uuid.UUID     `gorm:"default:null"          json:"reviewed_by,omitempty"`
+	ReviewedAt       *time.Time     `gorm:"default:null"          json:"reviewed_at,omitempty"`
+	RejectReason     *string        `gorm:"default:null"          json:"reject_reason,omitempty"`
 	BucketID         uuid.UUID      `                             json:"bucket_id"`
 	Bucket           Bucket         `                             json:"-"`
 	FolderID         *uuid.UUID     `gorm:"default:null"          json:"folder_id,omitempty"`
