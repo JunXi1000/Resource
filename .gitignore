@@ -67,4 +67,6 @@ next-env.d.ts
 
 web/config.json
 
-docs/
+# docs: keep authored markdown, ignore generated output
+docs/*
+!docs/*.md
