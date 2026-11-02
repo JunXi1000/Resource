@@ -65,6 +65,12 @@ var AuthExcludedPatterns = []AuthPatternRule{
 		),
 		Method: http.MethodPost,
 	},
+	{
+		// The anonymous catalog is read-only by design: every route under this
+		// prefix is a GET, and the handlers never read user claims.
+		Pattern: regexp.MustCompile(`^/api/v1/public(/.*)?$`),
+		Method:  http.MethodGet,
+	},
 }
 
 type AuthAudienceRule struct {

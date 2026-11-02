@@ -499,3 +499,49 @@ docker run --rm -v "E:/OneDrive/Desktop/safebucket/safebucket:/src" -w /src gola
 2. 待审文件是否计入配额：本文档按"计入"设计。
 3. 公开桶的 `owner` 自审权限：是否允许（本文档允许，管理员兜底）。
 4. 游客下载是否需要登录墙（当前设计为完全放开）。
+
+---
+
+## 11. 批 2 实现记录（公开只读）
+
+实际落地时与上文设计有几处偏差，以此节为准。
+
+### 11.1 路由
+
+```
+GET /api/v1/public/buckets                 栏目列表（q / category / tag / sort / cursor / limit）
+GET /api/v1/public/buckets/{slug}          栏目详情
+GET /api/v1/public/buckets/{slug}/files    目录浏览（folder / q / cursor / limit）
+GET /api/v1/public/categories              分类聚合
+GET /api/v1/public/files/{id}/url          取预签名下载地址
+```
+
+### 11.2 与设计的偏差
+
+| 项 | 设计 | 实现 | 原因 |
+|---|---|---|---|
+| 目录浏览响应 | `{data, next_cursor}` | `{bucket, folder, breadcrumb, folders, files, next_cursor}` | 匿名 UI 需要按层浏览：一次请求同时返回子目录、文件和面包屑，避免每次导航发多个请求 |
+| 下载响应 | `{url, name, size, expires_at}` | `{id, name, size, url}` | `storage.IStorage` 只返回 URL 字符串，签名过期时间不对外暴露 |
+| 路由白名单 | 新增正则 | `^/api/v1/public(/.*)?$`，且**仅限 GET** | 防止将来误加写接口时整段被放行；`/api/v1/publicity` 这类前缀相似的路径不会被匹配（有测试固定该边界） |
+| 开关 | "配置项" | `app.public_catalog_enabled`，默认 `true`，关闭时整组返回 404 | 默认开不影响存量部署：没有 `is_public` 的桶本来就不会出现 |
+
+### 11.3 分页
+
+游标是 base64url 编码的 `{sort key, id}` 二元组（`internal/helpers/cursor.go`），按键集分页，不是 offset。三种排序各自维护游标语义：
+
+- `recent`（默认）：`COALESCE(published_at, created_at)` DESC
+- `name`：`LOWER(name)` ASC
+- `popular`：文件数 DESC
+
+排序键相同的行靠 `id` 兜底，因此不会出现翻页丢行或重复。`id` 参数缺失或游标损坏一律返回 400，不返回 500。
+
+### 11.4 两个必须记住的实现细节
+
+1. **统计口径 = 可下载口径**。`file_count` / `total_size` 只统计 `uploaded` + `approved` + 未过期的文件。否则栏目页显示 100 个文件、点进去只有 60 个，用户会以为丢数据。
+2. **`COALESCE` 表达式不能直接扫进 `time.Time`**。SQLite 对计算列不附带类型，驱动会报 `unsupported Scan ... into type *time.Time`。所以查询分开选 `published_at` 和 `created_at` 两列，在 Go 里合并出排序键。这个问题只有真正在 SQLite 上跑测试才会暴露，两套数据库的测试因此都必须保留。
+
+### 11.5 已知限制
+
+- **匿名下载不写活动日志**。预签名直连存储，服务端看不到字节流；为了不给匿名流量增加写放大，批 2 不记录下载活动。P3 做热门榜时需要新增"按分钟聚合"的计数器，而不是直接插审计日志。
+- **未认证限流默认 20 次/分钟**（`app.unauthenticated_requests_per_minute`），公网站点偏低，上线前需要调高。
+

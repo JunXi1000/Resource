@@ -542,6 +542,12 @@ func BuildAPIRouter(
 			AllowRedirectDownload: config.App.AllowRedirectDownload,
 			Versions:              versions,
 		}.Routes())
+
+		apiRouter.Mount("/v1/public", services.PublicCatalogService{
+			DB:      db,
+			Storage: store,
+			Enabled: config.App.PublicCatalogEnabled,
+		}.Routes())
 	})
 
 	return r

@@ -29,6 +29,7 @@ app:
   max_upload_size: 53687091200 # 50 Gb
   allow_redirect_download: true
   allow_custom_share_ids: true
+  public_catalog_enabled: true # anonymous read-only catalog at /api/v1/public
   authenticated_requests_per_minute: 200
   unauthenticated_requests_per_minute: 20
   request_timeout_seconds: 5

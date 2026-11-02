@@ -50,6 +50,7 @@ type AppConfiguration struct {
 	CookieSecureForce                bool                   `mapstructure:"cookie_secure_force"`
 	AllowRedirectDownload            bool                   `mapstructure:"allow_redirect_download"`
 	AllowCustomShareIDs              bool                   `mapstructure:"allow_custom_share_ids"`
+	PublicCatalogEnabled             bool                   `mapstructure:"public_catalog_enabled"`
 	RequestTimeoutSeconds            int                    `mapstructure:"request_timeout_seconds"             validate:"gte=1,lte=120"`
 	Profiling                        ProfilingConfiguration `mapstructure:"profiling"`
 }
