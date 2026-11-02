@@ -14,6 +14,11 @@ var AuthExcludedExactPaths = map[string]string{
 	"/api/v1/auth/verify":         http.MethodPost,
 	"/api/v1/auth/refresh":        http.MethodPost,
 	"/api/v1/auth/reset-password": http.MethodPost,
+	// Self-service signup is anonymous by definition. All three routes are
+	// POST and rate limited per address and per IP.
+	"/api/v1/auth/register":        http.MethodPost,
+	"/api/v1/auth/register/verify": http.MethodPost,
+	"/api/v1/auth/register/resend": http.MethodPost,
 }
 
 type AuthPatternRule struct {

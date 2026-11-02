@@ -6,6 +6,7 @@ import (
 	"github.com/safebucket/safebucket/internal/configuration"
 	"github.com/safebucket/safebucket/internal/handlers"
 	h "github.com/safebucket/safebucket/internal/helpers"
+	"github.com/safebucket/safebucket/internal/messaging"
 	m "github.com/safebucket/safebucket/internal/middlewares"
 	"github.com/safebucket/safebucket/internal/models"
 	"github.com/safebucket/safebucket/internal/rbac"
@@ -22,6 +23,8 @@ type AdminService struct {
 	Cache          cache.ICache
 	ActivityLogger activity.IActivityLogger
 	Config         models.Configuration
+	AuthConfig     models.AuthConfig
+	Publisher      messaging.IPublisher
 }
 
 func (s AdminService) Routes() chi.Router {
@@ -40,6 +43,17 @@ func (s AdminService) Routes() chi.Router {
 
 	r.With(m.AuthorizeRole(models.RoleAdmin)).
 		Get("/settings", handlers.GetOneHandler(s.GetSettings))
+
+	// The approval queue lives under /admin/users. It is mounted here rather
+	// than in bootstrap because chi refuses to mount two routers on the same
+	// prefix (/v1/admin is already taken).
+	r.Mount("/users", AdminUserService{
+		DB:             s.DB,
+		Cache:          s.Cache,
+		AuthConfig:     s.AuthConfig,
+		Publisher:      s.Publisher,
+		ActivityLogger: s.ActivityLogger,
+	}.Routes())
 
 	return r
 }

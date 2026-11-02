@@ -30,6 +30,9 @@ app:
   allow_redirect_download: true
   allow_custom_share_ids: true
   public_catalog_enabled: true # anonymous read-only catalog at /api/v1/public
+  registration_enabled: false # self-service signup; off by default so upgrades never open signup silently
+  require_admin_approval: true # verified accounts wait in the approval queue before they can upload
+  default_user_quota_bytes: 21474836480 # 20 GiB per account; 0 means unlimited
   authenticated_requests_per_minute: 200
   unauthenticated_requests_per_minute: 20
   request_timeout_seconds: 5

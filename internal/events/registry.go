@@ -27,4 +27,10 @@ var eventRegistry = map[string]reflect.Type{
 	FolderPurgePayloadName:              reflect.TypeOf(FolderPurgePayload{}),
 	FileActivityNotificationName:        reflect.TypeOf(FileActivityNotification{}),
 	FileActivityNotificationPayloadName: reflect.TypeOf(FileActivityNotificationPayload{}),
+	RegistrationChallengeName:           reflect.TypeOf(RegistrationChallengeEvent{}),
+	RegistrationChallengePayloadName:    reflect.TypeOf(RegistrationChallengePayload{}),
+	RegistrationApprovedName:            reflect.TypeOf(RegistrationApprovedEvent{}),
+	RegistrationApprovedPayloadName:     reflect.TypeOf(RegistrationApprovedPayload{}),
+	RegistrationRejectedName:            reflect.TypeOf(RegistrationRejectedEvent{}),
+	RegistrationRejectedPayloadName:     reflect.TypeOf(RegistrationRejectedPayload{}),
 }

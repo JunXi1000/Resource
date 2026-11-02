@@ -1,0 +1,11 @@
+{{define "preheader"}}Your registration request was not approved.{{end}}
+{{define "body"}}
+<h1>Registration declined</h1>
+<p>An administrator reviewed your registration request and decided not to approve it.</p>
+{{if .Reason}}
+<p>Reason given:</p>
+<blockquote>{{.Reason}}</blockquote>
+{{end}}
+<p>If you believe this was a mistake, reply to this email and an administrator will take another look.</p>
+<p>Thank you,<br/>The Safebucket team</p>
+{{end}}

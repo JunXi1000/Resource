@@ -51,6 +51,9 @@ type AppConfiguration struct {
 	AllowRedirectDownload            bool                   `mapstructure:"allow_redirect_download"`
 	AllowCustomShareIDs              bool                   `mapstructure:"allow_custom_share_ids"`
 	PublicCatalogEnabled             bool                   `mapstructure:"public_catalog_enabled"`
+	RegistrationEnabled              bool                   `mapstructure:"registration_enabled"`
+	RequireAdminApproval             bool                   `mapstructure:"require_admin_approval"`
+	DefaultUserQuotaBytes            int64                  `mapstructure:"default_user_quota_bytes"            validate:"gte=0"`
 	RequestTimeoutSeconds            int                    `mapstructure:"request_timeout_seconds"             validate:"gte=1,lte=120"`
 	Profiling                        ProfilingConfiguration `mapstructure:"profiling"`
 }

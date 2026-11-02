@@ -105,8 +105,9 @@ func (s AuthPasswordResetService) RequestPasswordReset(
 		return nil, apierrors.New(http.StatusInternalServerError, apierrors.CodeInternalServerError)
 	}
 
-	s.DB.Where("user_id = ? AND type = ?", user.ID, models.ChallengeTypePasswordReset).
-		Delete(&models.Challenge{})
+	// idx_challenge_user is unique on user_id alone, so an outstanding
+	// registration challenge would otherwise block this insert.
+	s.DB.Where("user_id = ?", user.ID).Delete(&models.Challenge{})
 
 	expiresAt := time.Now().Add(configuration.SecurityChallengeExpirationMinutes * time.Minute)
 	challenge := models.Challenge{

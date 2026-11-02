@@ -116,18 +116,25 @@ func loadBytes(k *koanf.Koanf, raw []byte) error {
 
 func loadDefaults(k *koanf.Koanf) {
 	defaults := map[string]interface{}{
-		"app.profile":                             "default",
-		"app.access_token_expiry":                 60,
-		"app.refresh_token_expiry":                600,
-		"app.mfa_token_expiry":                    5,
-		"app.log_level":                           "info",
-		"app.port":                                8080,
-		"app.trash_retention_days":                7,
-		"app.max_file_versions":                   5,
-		"app.max_upload_size":                     int64(53687091200),
-		"app.allow_redirect_download":             true,
-		"app.allow_custom_share_ids":              true,
-		"app.public_catalog_enabled":              true,
+		"app.profile":                 "default",
+		"app.access_token_expiry":     60,
+		"app.refresh_token_expiry":    600,
+		"app.mfa_token_expiry":        5,
+		"app.log_level":               "info",
+		"app.port":                    8080,
+		"app.trash_retention_days":    7,
+		"app.max_file_versions":       5,
+		"app.max_upload_size":         int64(53687091200),
+		"app.allow_redirect_download": true,
+		"app.allow_custom_share_ids":  true,
+		"app.public_catalog_enabled":  true,
+		// Registration stays off by default: opening signup on an existing
+		// deployment is a deliberate decision, not something an upgrade should
+		// do silently.
+		"app.registration_enabled":   false,
+		"app.require_admin_approval": true,
+		// 20 GiB per account; 0 would mean unlimited.
+		"app.default_user_quota_bytes":            int64(21474836480),
 		"app.request_timeout_seconds":             5,
 		"app.authenticated_requests_per_minute":   200,
 		"app.unauthenticated_requests_per_minute": 20,

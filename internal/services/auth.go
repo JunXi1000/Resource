@@ -15,6 +15,7 @@ import (
 	"github.com/safebucket/safebucket/internal/mfa"
 	m "github.com/safebucket/safebucket/internal/middlewares"
 	"github.com/safebucket/safebucket/internal/models"
+	"github.com/safebucket/safebucket/internal/notifier"
 	"github.com/safebucket/safebucket/internal/outbox"
 	"github.com/safebucket/safebucket/internal/rbac"
 	"github.com/safebucket/safebucket/internal/sql"
@@ -34,6 +35,13 @@ type AuthService struct {
 	Providers      configuration.Providers
 	Publisher      messaging.IPublisher
 	ActivityLogger activity.IActivityLogger
+	// Signup settings are carried here so the /auth/register sub-router can be
+	// mounted inside this router: chi forbids mounting two routers on the same
+	// prefix, and /v1/auth is already taken.
+	RegistrationEnabled  bool
+	RequireAdminApproval bool
+	DefaultQuotaBytes    int64
+	Notifier             notifier.INotifier
 }
 
 func (s AuthService) Routes() chi.Router {
@@ -42,6 +50,19 @@ func (s AuthService) Routes() chi.Router {
 	r.With(m.Validate[models.AuthVerifyBody]).Post("/verify", handlers.CreateHandler(s.Verify))
 	r.Post("/refresh", s.refreshHandler())
 	r.Post("/logout", s.logoutHandler())
+
+	r.Mount("/register", RegistrationService{
+		DB:                   s.DB,
+		Cache:                s.Cache,
+		AuthConfig:           s.AuthConfig,
+		Providers:            s.Providers,
+		Publisher:            s.Publisher,
+		ActivityLogger:       s.ActivityLogger,
+		Notifier:             s.Notifier,
+		RegistrationEnabled:  s.RegistrationEnabled,
+		RequireAdminApproval: s.RequireAdminApproval,
+		DefaultQuotaBytes:    s.DefaultQuotaBytes,
+	}.Routes())
 
 	r.Route("/mfa", func(r chi.Router) {
 		r.With(m.Validate[models.MFALoginVerifyBody]).
@@ -111,6 +132,13 @@ func (s AuthService) finalizeLogin(
 	providerName string,
 	providerMFARequired bool,
 ) (handlers.AuthFlowResult, error) {
+	// The account state is checked before MFA on purpose: a suspended user
+	// should be told they are banned, not pushed through a TOTP prompt that
+	// ends in a generic failure.
+	if err := checkAccountUsable(user); err != nil {
+		return handlers.AuthFlowResult{}, err
+	}
+
 	verifiedDevices := user.GetVerifiedDevices()
 	hasMFA := len(verifiedDevices) > 0
 
@@ -164,6 +192,22 @@ func (s AuthService) finalizeLogin(
 			user.ProviderKey,
 		),
 	}, nil
+}
+
+// checkAccountUsable turns the account state into the error the client needs to
+// show the right screen: "verify your email", "wait for approval" or "banned".
+func checkAccountUsable(user *models.User) error {
+	switch user.Status {
+	case models.UserStatusSuspended:
+		return apierrors.New(http.StatusForbidden, apierrors.CodeUserSuspended)
+	case models.UserStatusPending:
+		if user.EmailVerifiedAt == nil {
+			return apierrors.New(http.StatusForbidden, apierrors.CodeEmailNotVerified)
+		}
+		return apierrors.New(http.StatusForbidden, apierrors.CodeUserPendingApproval)
+	default:
+		return nil
+	}
 }
 
 func (s AuthService) resolveAuthProvider(
@@ -273,6 +317,12 @@ func (s AuthService) Refresh(logger *zap.Logger, refreshTokenStr string) (string
 		logger.Warn("User not found during token refresh",
 			zap.String("user_id", refreshToken.UserID.String()))
 		return "", apierrors.New(http.StatusUnauthorized, apierrors.CodeUserNotFound)
+	}
+
+	// Without this an account banned mid-session could keep minting access
+	// tokens until its refresh token expired.
+	if statusErr := checkAccountUsable(&user); statusErr != nil {
+		return "", statusErr
 	}
 
 	accessToken, err := h.NewAccessToken(

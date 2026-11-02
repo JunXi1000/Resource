@@ -11,11 +11,14 @@ type ChallengeType string
 const (
 	ChallengeTypeInvite        ChallengeType = "invite"
 	ChallengeTypePasswordReset ChallengeType = "password_reset"
+	// ChallengeTypeRegistration carries the email verification code sent by
+	// self-service signup. It is bound to the freshly created, unverified user.
+	ChallengeTypeRegistration ChallengeType = "registration"
 )
 
 type Challenge struct {
 	ID           uuid.UUID     `gorm:"default:(-)"                                                      json:"id"`
-	Type         ChallengeType `gorm:"not null;index:idx_challenge_type"                                json:"type"                 validate:"required,oneof=invite password_reset"`
+	Type         ChallengeType `gorm:"not null;index:idx_challenge_type"                                json:"type"                 validate:"required,oneof=invite password_reset registration"`
 	HashedSecret string        `gorm:"not null;default:null"                                            json:"hashed_secret"        validate:"required"`
 	AttemptsLeft int           `gorm:"not null;default:3"                                               json:"attempts_left"`
 	ExpiresAt    *time.Time    `gorm:"index"                                                            json:"expires_at,omitempty"`

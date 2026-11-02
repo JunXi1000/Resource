@@ -1,0 +1,18 @@
+{{define "preheader"}}Confirm your email address to finish creating your account.{{end}}
+{{define "body"}}
+<h1>Confirm your email</h1>
+<p>Thanks for signing up. Use the verification code below to confirm this email address belongs to you:</p>
+<div class="verification-code">
+    <span>{{.Secret}}</span>
+</div>
+<table class="body-action" align="center" width="100%" cellpadding="0" cellspacing="0" role="presentation">
+    <tr>
+        <td align="center">
+            <a class="f-fallback button" href="{{.VerifyURL}}" target="_blank">Verify Email</a>
+        </td>
+    </tr>
+</table>
+<p>Or copy and paste this URL into your browser: <a href="{{.VerifyURL}}">{{.VerifyURL}}</a></p>
+<p>The code expires in {{.ExpiresMin}} minutes. If you did not create an account, no action is needed — the address simply stays unregistered.</p>
+<p>Thank you,<br/>The Safebucket team</p>
+{{end}}

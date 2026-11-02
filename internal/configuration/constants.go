@@ -85,11 +85,20 @@ const (
 
 	SecurityPasswordResetMaxPerEmailPerHour = 3
 	SecurityInviteMaxPerEmailPerHour        = 5
+	SecurityRegistrationMaxPerEmailPerHour  = 3
+	SecurityRegistrationMaxPerIPPerHour     = 10
 )
 
 const SecurityChallengeIssuanceWindow = time.Hour
 
 const CacheChallengeIssuanceEmailKey = "challenge:issuance:email:%s:%s"
+const CacheRegistrationIssuanceIPKey = "challenge:issuance:ip:registration:%s"
+
+// CacheAccountStatusKey caches the account status of an authenticated user so
+// RequireActiveAccount does not hit the database on every single request. The
+// TTL is the worst-case delay between an admin action and its enforcement.
+const CacheAccountStatusKey = "account:status:%s"
+const CacheAccountStatusTTL = 60 * time.Second
 
 const (
 	MaxMFADevicesPerUser = 5

@@ -545,3 +545,53 @@ GET /api/v1/public/files/{id}/url          取预签名下载地址
 - **匿名下载不写活动日志**。预签名直连存储，服务端看不到字节流；为了不给匿名流量增加写放大，批 2 不记录下载活动。P3 做热门榜时需要新增"按分钟聚合"的计数器，而不是直接插审计日志。
 - **未认证限流默认 20 次/分钟**（`app.unauthenticated_requests_per_minute`），公网站点偏低，上线前需要调高。
 
+
+---
+
+## 12. 批 3 实现记录（账号体系）
+
+与上文设计有偏差的地方以此节为准。
+
+### 12.1 与设计的偏差
+
+| 项 | 设计 | 实现 | 原因 |
+|---|---|---|---|
+| 注册成功响应 | `201 {"status":"pending_verification"}` | **统一 `202`**，body 恒为 `{"status":"pending_verification"}` | 201 与 202 的差别本身就是信号：新邮箱返回 201、已注册返回 202，接口立刻变成账号探测工具。统一 202 后，唯一能区分的是收件箱，而那本来就属于邮箱主人 |
+| 验证响应 | `200` | `200`（原实现用了 `CreateHandler` 会返回 201，已改回 200） | 验证是把已存在的账号往前推一步，不是创建资源 |
+| challenge 清理 | 按 `(user_id, type)` 删除 | **按 `user_id` 删除所有类型的 challenge** | `idx_challenge_user` 在 postgres 与 sqlite 上都是**只对 `user_id` 唯一**，不区分 type。残留的 password_reset challenge 会让注册 challenge 插入失败（500），反之亦然。密码重置的 `RequestPasswordReset` 同步改成同样的清理方式 |
+| 拒绝注册 | 未定义 | **硬删除**用户行 | 待审账号没有任何桶、文件、历史；软删行会继续占用 `(email, provider_key)` 唯一索引，申请人再也无法重新注册 |
+| 账号状态缓存 | 未提及 | 60s TTL（`configuration.CacheAccountStatusTTL`），审批动作主动失效 | 避免每个请求一次数据库往返；60s 是"封禁生效"的最坏延迟。审批接口会调用 `InvalidateAccountStatusCache`，所以通过本系统操作时是立即生效的 |
+| 注册默认值 | — | `registration_enabled: false`、`require_admin_approval: true`、`default_user_quota_bytes: 20 GiB` | 升级绝不能静默打开注册。这是本次唯一一个"默认关闭"的新开关 |
+
+### 12.2 邮箱枚举防护
+
+注册、重发两个接口对"邮箱是否已存在"给出完全一致的响应（`202` + 相同 body），差异只体现在收件箱：
+
+- 邮箱不存在 → 创建未验证账号 + 发验证码
+- 邮箱存在但未验证 → 用新密码覆盖旧密码 + 重发验证码（"我没收到第一封信"是最常见的情况）
+- 邮箱已验证 / 已封禁 / 已软删 → 什么都不发
+
+这意味着重复注册一个已验证邮箱**不会**产生任何邮件，前端提示必须写成"如果该邮箱可以注册，你会收到验证邮件"，不能承诺"已发送"。
+
+### 12.3 拦截点
+
+| 位置 | 行为 |
+|---|---|
+| `Authenticate` 之后 | 新增 `RequireActiveAccount`：`pending` → 403 `USER_PENDING_APPROVAL`，`suspended` → 403 `USER_SUSPENDED`，用户不存在 → 403 |
+| `finalizeLogin` | 在 MFA 之前检查状态：未验证 → `EMAIL_NOT_VERIFIED`，已验未批 → `USER_PENDING_APPROVAL`，封禁 → `USER_SUSPENDED` |
+| `Refresh` | 同样检查。否则被封禁的账号能用 refresh token 一直换新 access token，直到 refresh 过期 |
+| 匿名白名单 | `RequireActiveAccount` 通过 `AuthExcludedKey` 跳过匿名路由，否则待审用户连公开栏目都看不了 |
+
+`RequireActiveAccount` 是独立中间件而不是写进 `Authenticate`：登录本身必须保持可达，否则被封禁用户只会看到一个通用 403，永远不知道原因。
+
+### 12.4 迁移 00021
+
+SQLite 侧不是空操作：`00010_drop_enum_checks` 当年把 `challenges.type` 的 CHECK 约束整个删掉了，SQLite 从此接受任意字符串。00021 借重建表把约束**加回来**（含 `registration`），让两套库的约束重新对齐。重建过程保留原有数据和三个索引，`idx_challenge_user` 的唯一性实测仍生效。
+
+Postgres 侧是 `ALTER TYPE challenge_type ADD VALUE IF NOT EXISTS 'registration'`。PG 16 允许在事务里执行（goose 会给迁移包事务），只要同一事务内不使用该新值。Down 必须重建整个枚举类型，因为 PG 不支持删除单个枚举值。
+
+### 12.5 已知限制
+
+- **一个用户同时只能有一个活跃 challenge**（库层唯一索引）。注册 challenge 与密码重置 challenge 互斥，这是既有 schema 的约束，不是本次引入的。
+- **注册邮件没有"你已注册过"提醒**。为了避免多一个模板和一类邮件轰炸面，已验证邮箱的重复注册是完全静默的。如果运营上需要这个提醒，应单独加模板并纳入同一套限流。
+- **审批没有任何通知管理员的机制**。新注册只发用户邮件；管理员需要自己看后台队列。若要加，应复用 `notifier` 并对管理员邮箱去重。

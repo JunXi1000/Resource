@@ -22,3 +22,7 @@ const (
 	CodeReviewInvalidTransition = "REVIEW_INVALID_TRANSITION"
 	CodeReviewNotAllowed        = "REVIEW_NOT_ALLOWED"
 )
+
+// CodeUserStatusConflict is returned when an approval-queue action is applied
+// to an account that is already in the target state (or cannot reach it).
+const CodeUserStatusConflict = "USER_STATUS_CONFLICT"

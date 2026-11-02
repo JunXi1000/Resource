@@ -467,6 +467,11 @@ func BuildAPIRouter(
 		apiRouter.Use(m.CSRFGuard(config.App.AllowedOrigins))
 		apiRouter.Use(m.ClientInfo(config.App.TrustedProxies))
 		apiRouter.Use(m.Authenticate(authConfig.TokenSecret, cache, configuration.RefreshTokenExpiry))
+		// Gate business endpoints on the account state. Placed right after
+		// Authenticate so nothing downstream ever sees a pending or banned
+		// account, but before the audience checks: those endpoints are only
+		// meaningful for a usable account anyway.
+		apiRouter.Use(m.RequireActiveAccount(db, cache))
 		apiRouter.Use(m.AudienceValidate)
 		apiRouter.Use(m.MFAValidate(db, providers))
 		apiRouter.Use(m.RateLimit(
@@ -508,12 +513,16 @@ func BuildAPIRouter(
 		}.Routes())
 
 		apiRouter.Mount("/v1/auth", services.AuthService{
-			DB:             db,
-			Cache:          cache,
-			AuthConfig:     authConfig,
-			Providers:      providers,
-			Publisher:      publisher,
-			ActivityLogger: activityLogger,
+			DB:                   db,
+			Cache:                cache,
+			AuthConfig:           authConfig,
+			Providers:            providers,
+			Publisher:            publisher,
+			ActivityLogger:       activityLogger,
+			Notifier:             notify,
+			RegistrationEnabled:  config.App.RegistrationEnabled,
+			RequireAdminApproval: config.App.RequireAdminApproval,
+			DefaultQuotaBytes:    config.App.DefaultUserQuotaBytes,
 		}.Routes())
 
 		apiRouter.Mount("/v1/invites", services.InviteService{
@@ -530,6 +539,8 @@ func BuildAPIRouter(
 			Cache:          cache,
 			ActivityLogger: activityLogger,
 			Config:         config,
+			AuthConfig:     authConfig,
+			Publisher:      publisher,
 		}.Routes())
 
 		apiRouter.Mount("/v1/shares", services.PublicShareService{
