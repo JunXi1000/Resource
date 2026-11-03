@@ -19,6 +19,7 @@ type WorkerConfig struct {
 	BucketEvents     WorkerMode
 	TrashCleanup     WorkerMode
 	GarbageCollector WorkerMode
+	QuotaReaper      WorkerMode
 	Outbox           WorkerMode
 }
 
@@ -27,6 +28,7 @@ func (w WorkerConfig) AnyEnabled() bool {
 		w.BucketEvents != WorkerModeDisabled ||
 		w.TrashCleanup != WorkerModeDisabled ||
 		w.GarbageCollector != WorkerModeDisabled ||
+		w.QuotaReaper != WorkerModeDisabled ||
 		w.Outbox != WorkerModeDisabled
 }
 

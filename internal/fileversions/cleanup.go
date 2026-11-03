@@ -42,6 +42,11 @@ func (m Manager) Cleanup(bucketID, fileID, versionID uuid.UUID) error {
 		if err = tx.Delete(&version).Error; err != nil {
 			return err
 		}
+		// The upload version is gone: whatever quota it still holds is dead
+		// weight. Idempotent — no-op unless the hold is still open.
+		if err = sql.ReleaseReservation(tx, version.ID); err != nil {
+			return err
+		}
 		if file.CurrentVersionID == nil && file.Status == models.FileStatusUploading {
 			var remaining int64
 			if err = tx.Model(&models.FileVersion{}).Where("file_id = ?", fileID).Count(&remaining).Error; err != nil {

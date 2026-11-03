@@ -60,6 +60,34 @@ func CheckFileUploadable(file models.File) error {
 	return nil
 }
 
+// IsBucketPublic reports whether a bucket is published to the anonymous
+// catalog. Upload flows need it to decide the initial review state.
+func IsBucketPublic(tx *gorm.DB, bucketID uuid.UUID) (bool, error) {
+	var isPublic bool
+	err := tx.Model(&models.Bucket{}).
+		Where("id = ?", bucketID).
+		Select("COALESCE(is_public, FALSE)").
+		Scan(&isPublic).Error
+	return isPublic, err
+}
+
+// reviewStatusForNewFile decides the review state of a freshly created file.
+// Private-bucket files are approved unconditionally — review only exists to
+// gate the anonymous catalog, so private content must never get stuck in a
+// queue nobody looks at.
+func reviewStatusForNewFile(tx *gorm.DB, bucketID uuid.UUID) (models.ReviewStatus, error) {
+	isPublic, err := IsBucketPublic(tx, bucketID)
+	if err != nil {
+		return models.ReviewStatusApproved, err
+	}
+	if isPublic {
+		return models.ReviewStatusPending, nil
+	}
+	return models.ReviewStatusApproved, nil
+}
+
+// CheckFileUploadable is defined above.
+
 func ReserveFileVersion(tx *gorm.DB, bucketID uuid.UUID, body models.FileUploadBody,
 	userID *uuid.UUID, share *models.Share,
 ) (models.File, models.FileVersion, error) {
@@ -82,9 +110,14 @@ func ReserveFileVersion(tx *gorm.DB, bucketID uuid.UUID, body models.FileUploadB
 	}
 	newFile := result.RowsAffected == 0
 	if newFile {
+		reviewStatus, err := reviewStatusForNewFile(tx, bucketID)
+		if err != nil {
+			return file, models.FileVersion{}, err
+		}
 		file = models.File{ID: uuid.New(), BucketID: bucketID, FolderID: body.FolderID, Name: body.Name,
 			Extension: helpers.ExtensionFromName(body.Name), Status: models.FileStatusUploading,
-			ExpiresAt: body.ExpiresAt}
+			ReviewStatus: reviewStatus,
+			ExpiresAt:    body.ExpiresAt}
 		if err := tx.Create(&file).Error; err != nil {
 			return file, models.FileVersion{}, err
 		}
@@ -143,9 +176,29 @@ func PromoteFileVersion(tx *gorm.DB, file models.File, version models.FileVersio
 	if err := tx.Model(&version).Update("status", models.FileStatusUploaded).Error; err != nil {
 		return err
 	}
-	if err := tx.Model(&file).Updates(map[string]interface{}{
-		"status": models.FileStatusUploaded, "current_version_id": version.ID,
-	}).Error; err != nil {
+
+	updates := map[string]interface{}{
+		"status":             models.FileStatusUploaded,
+		"current_version_id": version.ID,
+	}
+	// Review granularity note: review_status tracks the file's CURRENT version.
+	// Promoting a new version in a public bucket sends the file back to the
+	// pending queue, because the reviewers approved the old bytes, not these
+	// ones. The previous version stays downloadable for authenticated bucket
+	// members through the version endpoints; the anonymous catalog hides the
+	// file until the new version is approved again.
+	isPublic, err := IsBucketPublic(tx, file.BucketID)
+	if err != nil {
+		return err
+	}
+	if isPublic {
+		updates["review_status"] = models.ReviewStatusPending
+		updates["reviewed_by"] = nil
+		updates["reviewed_at"] = nil
+		updates["reject_reason"] = nil
+	}
+
+	if err := tx.Model(&file).Updates(updates).Error; err != nil {
 		return err
 	}
 	var old []uuid.UUID

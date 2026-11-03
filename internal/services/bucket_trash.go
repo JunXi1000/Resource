@@ -61,6 +61,15 @@ func (s BucketTrashService) BulkTrash(
 
 		now := time.Now()
 
+		// Trashed files stop consuming quota during the retention window. The
+		// refund must run BEFORE the status flip and match MarkFilesDeleting's
+		// scope exactly, which is why both live on the same connection inside
+		// the same transaction.
+		if txErr := sql.RefundTrashedFiles(tx, bucketID, body.FolderIDs, body.FileIDs); txErr != nil {
+			logger.Error("Failed to refund trashed files quota", zap.Error(txErr))
+			return apierrors.New(http.StatusInternalServerError, apierrors.CodeUpdateFailed)
+		}
+
 		if txErr := sql.MarkFilesDeleting(tx, bucketID, body.FolderIDs, body.FileIDs, user.UserID, now); txErr != nil {
 			logger.Error("Failed to mark files for trashing", zap.Error(txErr))
 			return apierrors.New(http.StatusInternalServerError, apierrors.CodeUpdateFailed)

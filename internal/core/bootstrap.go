@@ -213,6 +213,22 @@ func StartWorkers(
 		},
 	)
 
+	startWorker(
+		ctx,
+		handle.wg,
+		profile.Workers.QuotaReaper,
+		configuration.WorkerQuotaReaper,
+		cache,
+		appIdentity,
+		func(workerCtx context.Context) {
+			worker := &workers.QuotaReaperWorker{
+				DB:          db,
+				RunInterval: configuration.QuotaReaperRunInterval,
+			}
+			worker.Start(workerCtx)
+		},
+	)
+
 	if deletionSub := eventsManager.GetSubscriber(configuration.EventsObjectDeletion); deletionSub != nil {
 		deletionMessages := deletionSub.Subscribe()
 		startWorker(

@@ -42,6 +42,10 @@ func (s UserService) Routes() chi.Router {
 	r.With(m.AuthorizeRole(models.RoleAdmin)).
 		With(m.Validate[models.UserCreateBody]).Post("/", handlers.CreateHandler(s.CreateUser))
 
+	// Registered before /{id0} so chi's static match wins over the param.
+	// Account usability is already enforced globally by RequireActiveAccount.
+	r.Get("/me/usage", handlers.GetOneHandler(s.GetMyUsage))
+
 	r.Route("/{id0}", func(r chi.Router) {
 		r.With(m.AuthorizeSelfOrAdmin(0)).
 			Get("/", handlers.GetOneHandler(s.GetUser))
@@ -300,6 +304,17 @@ func (s UserService) DeleteUser(logger *zap.Logger, user models.UserClaims, ids 
 		zap.String("email", user.Email),
 	)
 	return nil
+}
+
+// GetMyUsage reports the caller's own quota consumption, including bytes
+// currently held by in-flight uploads, so the number shown in the settings
+// page matches what upload enforcement actually reserves.
+func (s UserService) GetMyUsage(
+	_ *zap.Logger,
+	claims models.UserClaims,
+	_ uuid.UUIDs,
+) (models.UserUsage, error) {
+	return sql.GetUserUsage(s.DB, claims.UserID)
 }
 
 func (s UserService) GetUserStats(

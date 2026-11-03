@@ -595,3 +595,54 @@ Postgres 侧是 `ALTER TYPE challenge_type ADD VALUE IF NOT EXISTS 'registration
 - **一个用户同时只能有一个活跃 challenge**（库层唯一索引）。注册 challenge 与密码重置 challenge 互斥，这是既有 schema 的约束，不是本次引入的。
 - **注册邮件没有"你已注册过"提醒**。为了避免多一个模板和一类邮件轰炸面，已验证邮箱的重复注册是完全静默的。如果运营上需要这个提醒，应单独加模板并纳入同一套限流。
 - **审批没有任何通知管理员的机制**。新注册只发用户邮件；管理员需要自己看后台队列。若要加，应复用 `notifier` 并对管理员邮箱去重。
+
+---
+
+## 13. 批 4 实现记录（配额与审核）
+
+### 13.1 实现清单
+
+| 模块 | 文件 | 内容 |
+|---|---|---|
+| 配额原语 | `internal/sql/quota.go` | `ReserveQuota`（原子 UPDATE 预占）、`SettleUploadQuota`（结算）、`ReleaseReservation`（释放）、`ReapExpiredReservations`（回收）、`GetUserUsage`（用量）、`RefundTrashedFiles` / `ChargeRestoredFile`（回收站退/补） |
+| 上传挂钩 | `internal/fileversions/uploads.go` | `Start` 事务内预占 + 写 `upload_reservations`；`Complete` 结算并退还被替换的旧版本 |
+| 释放挂钩 | `internal/fileversions/cleanup.go`、`bucket_file.go` | 版本删除 / 文件清除时释放仍开放的预占 |
+| 回收站 | `internal/services/bucket_trash.go` | 进回收站前按 `MarkFilesDeleting` 同一作用域退款（同事务） |
+| 回收 worker | `internal/workers/quota_reaper.go` | 每 10 分钟批量释放过期预占，`WorkerConfig.QuotaReaper` 控制（default/worker 配置为 singleton，api 配置禁用） |
+| 用量接口 | `GET /api/v1/users/me/usage` | `quota_bytes` / `used_bytes` / `reserved_bytes` / `percent` |
+| 审核台 | `internal/services/admin_reviews.go` + `internal/sql/reviews.go` | `GET /admin/reviews`、`POST /admin/reviews/{id}/approve`、`POST /admin/reviews/{id}/reject` |
+| 分享守卫 | `internal/services/bucket_share.go` | 文件分享签发时 `review_status != approved` → 403 `REVIEW_NOT_ALLOWED` |
+
+### 13.2 与设计的偏差
+
+| 设计 | 实现 | 理由 |
+|---|---|---|
+| 旧版本保持可下载（§5 规则 1） | 审核粒度实现在**文件级** `review_status`：公开桶重传新版本 → 文件回到 `pending`，匿名目录暂时隐藏该文件；旧版本仍可被桶内成员通过版本接口下载 | 版本级审核需要给 `file_versions` 加列、公开目录改按"最近已审版本"取内容，复杂度翻倍。重审期间隐藏是更安全（而非更不安全）的默认，运营上可接受 |
+| 进回收站立即退配额（§4.3） | 已实现，另补了设计未提的**恢复回补**：从回收站还原时重新计费，且不做配额检查（还原永远不因配额满而失败） | 退了不补会导致"删了再还原"凭空消失配额 |
+| — | 被替换旧版本的配额退还给**旧版本的上传者**（可能是另一个人） | 配额按"谁上传的当前版本"归属，跨用户重传时双方计数各自正确 |
+| — | `approve` 幂等（对已批准文件重复点无副作用）；`reject` 对已批准文件生效，即**下架**路径 | 审核台是给人用的，双击不应报错；已公开内容必须随时可撤 |
+| — | 分享上传（share link，无用户身份）不占任何人的配额 | 上传者匿名，无法记账；桶主配额属未来工作 |
+
+### 13.3 记账不变量
+
+`used_bytes = Σ(未删除文件的当前版本大小，按版本上传者归属) + Σ(开放预占)`。达成方式：
+
+1. `Start`：`used_bytes += size`（原子 UPDATE，413 `QUOTA_EXCEEDED` 失败即回滚）
+2. `Complete`：`used_bytes += (实际大小 − 预占额)`，预占转 `settled`；退还旧版本
+3. 版本删除 / 文件清除：开放预占转 `released` 并退款
+4. 进回收站：当前版本上传者 `used_bytes -= size`；还原时加回
+5. 超过 2 小时未完成的预占由 reaper 兜底释放
+
+所有减法都走 `CASE WHEN used_bytes + ? > 0 ... END` 钳位，历史数据（升级前上传、从未计入 used_bytes）退款不会把计数打成负数而违反 CHECK 约束。升级后的对账偏差最多等于历史存量，如需精确可另跑一次校准脚本。
+
+### 13.4 测试
+
+`internal/sql/quota_test.go` + `internal/sql/reviews_test.go`，同一份断言跑 SQLite 与 PostgreSQL（`TEST_POSTGRES_DSN`）。验收标准 §7 的并发用例已落地：`TestConcurrentReservationsNoOversell`（10 MiB 配额、两个 6 MiB 并发上传 → 恰好一胜一负、`used_bytes` 精确停在 6 MiB），该测试仅在 PG 下运行，因为只有行锁能证明 SQL 真正原子。
+
+其余覆盖：超额 413、结算差值退款、释放幂等、reaper 只动过期记录、用量含 `reserved_bytes`、回收站退/补闭环、审核状态机全转移（含下架与幂等）、审核权限矩阵（admin / 公开桶 owner / contributor 不可自审）、公开桶上传→`pending`、重传重置审核、私有桶不受影响。
+
+### 13.5 已知限制
+
+- **分享上传不占配额**（见偏差表），大流量分享链接仍是桶主存储的无界入口，后续可按"桶主配额"补一层。
+- **`GetUserUsage` 的 `reserved_bytes` 只统计开放预占**，与 `used_bytes` 不重叠；前端展示"已用 + 预占"时需自行相加。
+- **桶删除 / 批量清除事件路径不主动释放开放预占**，依赖 reaper 兜底（最多滞后 2 小时 + 10 分钟），换 eventual correctness 换更少的侵入点。

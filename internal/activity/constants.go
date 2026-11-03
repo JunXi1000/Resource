@@ -55,4 +55,6 @@ var (
 	UserSuspended                = defineAction("USER_SUSPENDED")
 	UserReinstated               = defineAction("USER_REINSTATED")
 	UserQuotaUpdated             = defineAction("USER_QUOTA_UPDATED")
+	FileReviewApproved           = defineAction("FILE_REVIEW_APPROVED")
+	FileReviewRejected           = defineAction("FILE_REVIEW_REJECTED")
 )

@@ -44,6 +44,25 @@ func (m Manager) Start(logger *zap.Logger, bucketID uuid.UUID, body models.FileU
 		if err != nil {
 			return err
 		}
+		// Quota pre-debit. Only first-party uploads carry a user identity:
+		// share uploads are anonymous by design and charge nobody's counter.
+		// The atomic UPDATE inside makes concurrent uploads queue on the row
+		// lock instead of all passing a stale check.
+		if userID != nil && share == nil {
+			if err = sql.ReserveQuota(tx, *userID, int64(body.Size)); err != nil {
+				return err
+			}
+			reservation := models.UploadReservation{
+				UserID:    *userID,
+				BucketID:  bucketID,
+				VersionID: version.ID,
+				Bytes:     int64(body.Size),
+				ExpiresAt: time.Now().Add(models.ReservationTTL),
+			}
+			if err = tx.Create(&reservation).Error; err != nil {
+				return err
+			}
+		}
 		presigned, err = m.Storage.PresignUpload(
 			storage.VersionObjectKey(bucketID, version.ID),
 			body.Size,
@@ -110,7 +129,22 @@ func (m Manager) Complete(logger *zap.Logger, bucketID, fileID, versionID uuid.U
 		if err = m.finishStorage(logger, file, version, multipart, share); err != nil {
 			return err
 		}
+		// Capture the outgoing current version BEFORE the promotion flips the
+		// pointer: its size gets refunded to its uploader during settlement.
+		var replaced *models.FileVersion
+		if file.CurrentVersionID != nil && *file.CurrentVersionID != version.ID {
+			var previous models.FileVersion
+			if err = tx.Where("id = ?", *file.CurrentVersionID).Find(&previous).Error; err != nil {
+				return err
+			}
+			if previous.ID != uuid.Nil {
+				replaced = &previous
+			}
+		}
 		if err = sql.PromoteFileVersion(tx, file, version, m.MaxVersions); err != nil {
+			return err
+		}
+		if err = sql.SettleUploadQuota(tx, version, replaced); err != nil {
 			return err
 		}
 		completed = Completion{File: file, Version: version, Changed: true}

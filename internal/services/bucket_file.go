@@ -194,6 +194,13 @@ func (s BucketFileService) RestoreFile(
 			return apierrors.New(http.StatusInternalServerError, apierrors.CodeUpdateFailed)
 		}
 
+		// Mirror of the trash refund: the file consumes quota again. Deliberately
+		// unchecked — a restore must never fail because the quota filled up.
+		if chargeErr := sql.ChargeRestoredFile(tx, file); chargeErr != nil {
+			logger.Error("Failed to charge restored file quota", zap.Error(chargeErr))
+			return apierrors.New(http.StatusInternalServerError, apierrors.CodeUpdateFailed)
+		}
+
 		restoredFile = file
 
 		action := models.Activity{
@@ -265,6 +272,20 @@ func (s BucketFileService) PurgeFile(
 		}
 		if err := s.Storage.UnmarkAsTrashed(objectPath, file); err != nil {
 			logger.Warn("Failed to remove trash marker", zap.Error(err))
+		}
+
+		// Any quota hold still open for this file's versions is orphaned now:
+		// the file and its versions cease to exist. Settled holds stay settled
+		// (the trash refund already happened when the file entered the trash).
+		var versionIDs []uuid.UUID
+		if err := tx.Model(&models.FileVersion{}).Where("file_id = ?", file.ID).
+			Pluck("id", &versionIDs).Error; err != nil {
+			return err
+		}
+		for _, versionID := range versionIDs {
+			if err := sql.ReleaseReservation(tx, versionID); err != nil {
+				return err
+			}
 		}
 
 		if err := tx.Unscoped().Delete(&file).Error; err != nil {

@@ -82,6 +82,18 @@ func (s BucketShareService) CreateShare(
 		if count != int64(len(body.FileIDs)) {
 			return models.Share{}, apierrors.New(http.StatusNotFound, apierrors.CodeFileNotFound)
 		}
+
+		// Review guard: a share link must not become a side door around the
+		// moderation queue. Files whose current version is pending or rejected
+		// cannot be shared until they are approved.
+		var unreviewed int64
+		s.DB.Model(&models.File{}).
+			Where("id IN ? AND bucket_id = ? AND review_status != ?",
+				body.FileIDs, bucketID, models.ReviewStatusApproved).
+			Count(&unreviewed)
+		if unreviewed > 0 {
+			return models.Share{}, apierrors.New(http.StatusForbidden, apierrors.CodeReviewNotAllowed)
+		}
 	}
 
 	var hashedPassword string

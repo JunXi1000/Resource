@@ -55,6 +55,14 @@ func (s AdminService) Routes() chi.Router {
 		ActivityLogger: s.ActivityLogger,
 	}.Routes())
 
+	// The moderation queue is NOT wrapped in AuthorizeRole: owners of public
+	// buckets may moderate their own bucket, so every handler enforces the
+	// permission matrix itself. See AdminReviewService.
+	r.Mount("/reviews", AdminReviewService{
+		DB:             s.DB,
+		ActivityLogger: s.ActivityLogger,
+	}.Routes())
+
 	return r
 }
 

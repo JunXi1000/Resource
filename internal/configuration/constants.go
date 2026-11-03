@@ -49,6 +49,7 @@ const (
 	WorkerBucketEvents     = "bucket_events"
 	WorkerTrashCleanup     = "trash_cleanup"
 	WorkerGarbageCollector = "garbage_collector"
+	WorkerQuotaReaper      = "quota_reaper"
 	WorkerOutboxEvents     = "outbox_events"
 	WorkerOutboxActivities = "outbox_activities"
 	CoverageHTTPServer     = "http_server"
@@ -58,6 +59,11 @@ const (
 	OutboxPollInterval = 500 * time.Millisecond
 	OutboxBatchSize    = 100
 )
+
+// QuotaReaperRunInterval is how often expired upload quota holds get released.
+// The reservation TTL is 2h, so a 10 minute sweep bounds the leak at ~8% of the
+// TTL even in the worst case.
+const QuotaReaperRunInterval = 10 * time.Minute
 
 const CacheMultipartStateExpiry = 2 * time.Hour
 
