@@ -32,12 +32,21 @@ function RootComponent() {
 
   const isAuthRoute = location.pathname.startsWith("/auth");
   const isShareRoute = location.pathname.startsWith("/shares");
-  const showSidebar = session && !isAuthRoute && !isShareRoute;
+  // The public catalog renders its own header and must never be wrapped in the
+  // authenticated chrome, even for a signed-in visitor: two competing nav bars
+  // on the same page is worse than no sidebar at all.
+  const isPublicRoute =
+    location.pathname === "/" ||
+    location.pathname.startsWith("/b/") ||
+    location.pathname.startsWith("/search") ||
+    location.pathname.startsWith("/pending-approval");
+  const isStandalone = isShareRoute || isPublicRoute;
+  const showSidebar = session && !isAuthRoute && !isStandalone;
 
   return (
     <div className="flex h-svh max-h-svh w-full overflow-hidden">
       {showSidebar && <AppSidebar />}
-      {isShareRoute ? (
+      {isStandalone ? (
         <div className="min-w-0 flex-1 overflow-y-auto">
           <Outlet />
         </div>
@@ -46,7 +55,7 @@ function RootComponent() {
           <Outlet />
         </AppSidebarInset>
       )}
-      {!isShareRoute && <UploadPanel />}
+      {!isStandalone && <UploadPanel />}
       <Toaster />
 
       {config.environment == EnvironmentType.development && (

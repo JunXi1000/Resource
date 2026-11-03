@@ -68,7 +68,20 @@
     "FILE_VERSION_NOT_FOUND": "This version no longer exists. Refresh the version history.",
     "FILE_VERSION_IS_CURRENT": "The current version cannot be deleted.",
     "FILE_VERSION_NOT_RESTORABLE": "This version cannot be restored. Refresh the version history.",
-    "FILE_VERSION_NOT_DELETABLE": "This version cannot be deleted. Refresh the version history."
+    "FILE_VERSION_NOT_DELETABLE": "This version cannot be deleted. Refresh the version history.",
+    "REGISTRATION_DISABLED": "Sign-up is disabled on this instance.",
+    "EMAIL_ALREADY_REGISTERED": "If this address can register, you will receive a verification email.",
+    "EMAIL_NOT_VERIFIED": "This email address has not been verified yet.",
+    "INVALID_VERIFICATION_CODE": "The verification code is invalid or has expired.",
+    "USER_PENDING_APPROVAL": "This account is waiting for administrator approval.",
+    "USER_SUSPENDED": "This account has been suspended. Contact an administrator.",
+    "QUOTA_EXCEEDED": "Your storage quota is too small for this file.",
+    "INVALID_SLUG": "The slug may only contain lowercase letters, digits and hyphens.",
+    "SLUG_TAKEN": "That slug is already in use.",
+    "BUCKET_NOT_PUBLIC": "This collection does not exist or is not public.",
+    "REVIEW_INVALID_TRANSITION": "This review action is not allowed in the current state. Refresh and try again.",
+    "REVIEW_NOT_ALLOWED": "You are not allowed to moderate this content.",
+    "USER_STATUS_CONFLICT": "The account state changed meanwhile. Refresh and try again."
   },
   "toast": {
     "download_started": "Download started for file {{filename}}",
@@ -242,7 +255,9 @@
         "error_session_expired": "Your session has expired. Please start the password reset process again.",
         "footer_text": "Didn't receive the code? Check your spam folder or request a new one"
       }
-    }
+    },
+    "no_account": "Don't have an account?",
+    "sign_up": "Sign up"
   },
   "homepage": {
     "welcome": "Welcome back {{firstName}}!",
@@ -364,7 +379,12 @@
     "users": "Users",
     "buckets": "Buckets",
     "admin_activity": "Activity",
-    "admin_settings": "Settings"
+    "admin_settings": "Settings",
+    "public_catalog": "Public catalog",
+    "approvals": "Approvals",
+    "moderation": "Moderation",
+    "reviews": "Content review",
+    "usage": "Storage quota"
   },
   "activity": {
     "title": "Activity Feed",
@@ -740,7 +760,8 @@
       "description": "Select your preferred language",
       "english": "English",
       "french": "French",
-      "german": "German"
+      "german": "German",
+      "chinese": "简体中文"
     },
     "datetime": {
       "title": "Date & time",
@@ -1106,6 +1127,70 @@
         "security": "Security & Auth",
         "observability": "Observability"
       }
+    },
+    "reviews": {
+      "title": "Content review",
+      "description": "Moderate files uploaded to public collections. Rejecting an approved file takes it down.",
+      "status": {
+        "pending": "Pending",
+        "approved": "Approved",
+        "rejected": "Rejected"
+      },
+      "empty": {
+        "pending": "Nothing waiting for review.",
+        "approved": "No approved files yet.",
+        "rejected": "No rejected files."
+      },
+      "approve": "Approve",
+      "reject": "Reject",
+      "restore": "Publish again",
+      "takedown": "Take down",
+      "unknown_uploader": "Unknown uploader",
+      "approved_toast": "File approved",
+      "rejected_toast": "File rejected",
+      "reject_dialog": {
+        "title": "Reject this file",
+        "description": "Explain why {{name}} is rejected. The uploader will see this text.",
+        "placeholder": "e.g. copyright infringement / off-topic"
+      }
+    },
+    "approvals": {
+      "title": "Approvals",
+      "description": "Review self-service signups and manage account state and quota.",
+      "status": {
+        "pending": "Pending",
+        "active": "Active",
+        "suspended": "Suspended"
+      },
+      "empty": "No accounts in this state.",
+      "search_placeholder": "Search by email",
+      "usage": "{{used}} of {{quota}} used",
+      "unlimited": "Unlimited",
+      "role_admin": "Admin",
+      "approve": "Approve",
+      "reject": "Reject",
+      "suspend": "Suspend",
+      "quota": "Quota",
+      "approved_toast": "Account approved",
+      "rejected_toast": "Signup rejected",
+      "suspended_toast": "Account suspended",
+      "quota_updated_toast": "Quota updated",
+      "reject_dialog": {
+        "title": "Reject signup"
+      },
+      "suspend_dialog": {
+        "title": "Suspend account"
+      },
+      "reason_dialog": {
+        "description": "The action and reason are recorded against {{email}}.",
+        "placeholder": "Reason (required for suspension, min. 3 characters)"
+      },
+      "quota_dialog": {
+        "title": "Adjust storage quota",
+        "description": "Set a new storage quota for {{email}}.",
+        "label": "Quota (GiB)",
+        "hint": "Use 0 for unlimited."
+      }
     }
   },
   "file_versions": {
@@ -1129,5 +1214,109 @@
     "delete_description": "Permanently delete this version of {{filename}}. This cannot be undone.",
     "restored": "Version restored.",
     "deleted": "Version deleted."
+  },
+  "public_catalog": {
+    "header": {
+      "browse": "Browse",
+      "search": "Search",
+      "login": "Sign in",
+      "register": "Sign up",
+      "console": "Open console"
+    },
+    "footer": "SafeBucket — self-hosted file sharing. © {{year}}",
+    "hero": {
+      "title": "Discover and download shared resources",
+      "subtitle": "Browse public collections from this instance. No account needed.",
+      "search_placeholder": "Search collections",
+      "search": "Search"
+    },
+    "sections": {
+      "title": "Public collections"
+    },
+    "categories": {
+      "all": "All"
+    },
+    "empty": {
+      "description": "No public collections yet. Check back soon."
+    },
+    "load_more": "Load more",
+    "error": "Something went wrong while loading the catalog.",
+    "disabled": {
+      "title": "Public catalog is disabled",
+      "description": "This instance does not expose a public catalog. Sign in to access your files."
+    },
+    "bucket": {
+      "file_count": "{{count}} files",
+      "root": "All files",
+      "search_placeholder": "Search in this collection",
+      "empty": "This collection is empty.",
+      "no_search_results": "No files match \"{{query}}\".",
+      "search_results": "{{count}} results",
+      "not_found": {
+        "title": "Collection not found",
+        "description": "This collection does not exist or is not public."
+      },
+      "back_to_catalog": "Back to catalog"
+    },
+    "file": {
+      "download": "Download"
+    },
+    "search": {
+      "title": "Search",
+      "description": "Search across every public collection.",
+      "results_for": "Results for \"{{query}}\"",
+      "no_results": "No collections found. Try a different keyword."
+    },
+    "logo_alt": "SafeBucket"
+  },
+  "register": {
+    "title": "Create an account",
+    "subtitle": "Sign up to upload and share your own files",
+    "first_name": "First name",
+    "last_name": "Last name",
+    "email": "Email",
+    "password": "Password",
+    "password_hint": "At least 8 characters.",
+    "submit": "Create account",
+    "submitting": "Creating account...",
+    "error": "Could not complete the signup. Please try again.",
+    "have_account": "Already have an account?",
+    "sign_in": "Sign in",
+    "disabled": {
+      "title": "Sign-up is closed",
+      "description": "This instance does not accept self-service signups. Ask an administrator for an account.",
+      "back_to_login": "Back to sign in"
+    },
+    "verify": {
+      "title": "Verify your email",
+      "subtitle": "If {{email}} can register, a 6-digit code is on its way. Enter it below.",
+      "code_label": "Verification code",
+      "submit": "Verify",
+      "submitting": "Verifying...",
+      "resend": "Resend code",
+      "resent": "If the address can register, a new code has been sent.",
+      "error": "The code is invalid or has expired.",
+      "missing_email": {
+        "title": "Email missing",
+        "description": "Start the signup again so we know which address to verify."
+      },
+      "back_to_register": "Back to sign-up"
+    }
+  },
+  "pending_approval": {
+    "title": "Waiting for approval",
+    "description": "Your email is verified. An administrator still has to approve the account before you can sign in.",
+    "back_to_catalog": "Browse the catalog",
+    "back_to_login": "Back to sign in"
+  },
+  "usage": {
+    "title": "Storage quota",
+    "description": "How much of your personal quota is used, and how much is held by uploads in progress.",
+    "used": "Used",
+    "reserved": "Reserved",
+    "remaining": "Remaining",
+    "unlimited": "Unlimited",
+    "percent_used": "{{percent}}% used",
+    "hint": "Reserved space belongs to uploads that were started but not finished. It is released automatically within two hours."
   }
 }

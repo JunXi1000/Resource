@@ -1,10 +1,13 @@
 import {
   Activity,
   FolderOpen,
+  Gauge,
   Home,
+  Inbox,
   LayoutDashboard,
   Settings,
   Shield,
+  ShieldCheck,
   SlidersHorizontal,
   User,
   Users,
@@ -22,6 +25,10 @@ export const nav = {
       items: [
         {
           title: "navigation.home",
+          url: "/dashboard",
+        },
+        {
+          title: "navigation.public_catalog",
           url: "/",
         },
         {
@@ -53,6 +60,11 @@ export const nav = {
           icon: Users,
         },
         {
+          title: "navigation.approvals",
+          url: "/admin/approvals",
+          icon: Inbox,
+        },
+        {
           title: "navigation.buckets",
           url: "/admin/buckets",
           icon: FolderOpen,
@@ -61,6 +73,19 @@ export const nav = {
           title: "navigation.admin_settings",
           url: "/admin/settings",
           icon: Settings,
+        },
+      ],
+    },
+  ],
+  moderation: [
+    {
+      title: "navigation.moderation",
+      url: "#",
+      icon: ShieldCheck,
+      items: [
+        {
+          title: "navigation.reviews",
+          url: "/reviews",
         },
       ],
     },
@@ -75,6 +100,11 @@ export const nav = {
       title: "navigation.preferences",
       url: "/settings/preferences",
       icon: SlidersHorizontal,
+    },
+    {
+      title: "navigation.usage",
+      url: "/settings/usage",
+      icon: Gauge,
     },
   ],
 };

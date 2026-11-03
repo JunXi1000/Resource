@@ -176,7 +176,7 @@ export function usePasswordResetFlow({
 
         setTimeout(() => {
           void refreshSession();
-          navigate({ to: "/" });
+          navigate({ to: "/dashboard" });
         }, PASSWORD_RESET_SUCCESS_DELAY);
       } catch {
         setError(t("auth.password_reset.validate.error_validation_failed"));

@@ -77,7 +77,7 @@ function LdapLogin() {
         search: { redirect: redirectTo },
       });
     } else if (result.success) {
-      navigate({ to: redirectTo || "/" });
+      navigate({ to: redirectTo || "/dashboard" });
     } else {
       setError(result.error || t("auth.login_error"));
     }

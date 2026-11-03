@@ -20,6 +20,8 @@ type StaticFileService struct {
 	requiresUploadConfirmation bool
 	trashRetentionDays         int
 	allowCustomShareIDs        bool
+	registrationEnabled        bool
+	publicCatalogEnabled       bool
 }
 
 type ConfigJSON struct {
@@ -28,6 +30,8 @@ type ConfigJSON struct {
 	RequiresUploadConfirmation bool   `json:"requiresUploadConfirmation"`
 	TrashRetentionDays         int    `json:"trashRetentionDays"`
 	AllowCustomShareIDs        bool   `json:"allowCustomShareIDs"`
+	RegistrationEnabled        bool   `json:"registrationEnabled"`
+	PublicCatalogEnabled       bool   `json:"publicCatalogEnabled"`
 }
 
 func NewStaticFileService(
@@ -37,6 +41,8 @@ func NewStaticFileService(
 	requiresUploadConfirmation bool,
 	trashRetentionDays int,
 	allowCustomShareIDs bool,
+	registrationEnabled bool,
+	publicCatalogEnabled bool,
 ) (*StaticFileService, error) {
 	service := &StaticFileService{
 		fsys:                       fsys,
@@ -46,6 +52,8 @@ func NewStaticFileService(
 		requiresUploadConfirmation: requiresUploadConfirmation,
 		trashRetentionDays:         trashRetentionDays,
 		allowCustomShareIDs:        allowCustomShareIDs,
+		registrationEnabled:        registrationEnabled,
+		publicCatalogEnabled:       publicCatalogEnabled,
 	}
 
 	configData, err := service.buildConfigJSON()
@@ -72,6 +80,8 @@ func (s *StaticFileService) buildConfigJSON() ([]byte, error) {
 		RequiresUploadConfirmation: s.requiresUploadConfirmation,
 		TrashRetentionDays:         s.trashRetentionDays,
 		AllowCustomShareIDs:        s.allowCustomShareIDs,
+		RegistrationEnabled:        s.registrationEnabled,
+		PublicCatalogEnabled:       s.publicCatalogEnabled,
 	}
 
 	data, err := json.Marshal(config)

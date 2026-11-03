@@ -8,6 +8,8 @@ export const defaultConfig: IConfig = {
   requiresUploadConfirmation: false,
   trashRetentionDays: 7,
   allowCustomShareIDs: true,
+  registrationEnabled: false,
+  publicCatalogEnabled: true,
 };
 
 export const configQueryOptions = () =>

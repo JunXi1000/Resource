@@ -79,7 +79,7 @@ export const InviteAcceptForm: FC<IInviteAcceptFormProps> = ({
       // Navigate after delay (matches password reset UX)
       setTimeout(() => {
         void refreshSession();
-        navigate({ to: "/" });
+        navigate({ to: "/dashboard" });
       }, 2000);
     } catch {
       setError(t("invites.accept.error_validation_failed"));

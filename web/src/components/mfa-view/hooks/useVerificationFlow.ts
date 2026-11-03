@@ -56,7 +56,7 @@ export function useVerificationFlow({
       setTimeout(async () => {
         onClearAuth();
         await router.invalidate();
-        router.navigate({ to: redirectPath || "/", replace: true });
+        router.navigate({ to: redirectPath || "/dashboard", replace: true });
       }, MFA_VERIFICATION_SUCCESS_DELAY);
     } else {
       setError(result.error || t("auth.mfa.error_verification_failed"));

@@ -25,7 +25,7 @@ function CompleteAuthComponent() {
     void refreshSession();
 
     if (session) {
-      navigate({ to: redirect || "/", replace: true });
+      navigate({ to: redirect || "/dashboard", replace: true });
     }
   }, [session, redirect, navigate, refreshSession]);
 

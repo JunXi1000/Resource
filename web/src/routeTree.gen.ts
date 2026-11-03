@@ -9,16 +9,26 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
-import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as PendingApprovalRouteImport } from './routes/pending-approval'
+import { Route as SearchRouteImport } from './routes/search'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedReviewsRouteImport } from './routes/_authenticated/reviews'
+import { Route as BSlugRouteImport } from './routes/b/$slug'
 import { Route as AuthenticatedActivityIndexRouteImport } from './routes/_authenticated/activity/index'
+import { Route as AuthenticatedAdminApprovalsRouteImport } from './routes/_authenticated/admin/approvals'
 import { Route as AuthenticatedBucketsBucketIdRouteImport } from './routes/_authenticated/buckets/$bucketId'
 import { Route as AuthenticatedSettingsIndexRouteImport } from './routes/_authenticated/settings/index'
+import { Route as AuthenticatedSettingsUsageRouteImport } from './routes/_authenticated/settings/usage'
 import { Route as AuthCompleteIndexRouteImport } from './routes/auth/complete/index'
 import { Route as AuthLoginIndexRouteImport } from './routes/auth/login/index'
 import { Route as AuthMfaIndexRouteImport } from './routes/auth/mfa/index'
+import { Route as AuthRegisterIndexRouteImport } from './routes/auth/register/index'
+import { Route as AuthRegisterVerifyRouteImport } from './routes/auth/register/verify'
 import { Route as AuthResetPasswordIndexRouteImport } from './routes/auth/reset-password/index'
+import { Route as BSlugIndexRouteImport } from './routes/b/$slug/index'
 import { Route as InvitesIdIndexRouteImport } from './routes/invites/$id/index'
 import { Route as SharesPathIndexRouteImport } from './routes/shares/$path/index'
 import { Route as AuthenticatedAdminActivityIndexRouteImport } from './routes/_authenticated/admin/activity/index'
@@ -38,28 +48,60 @@ import { Route as AuthenticatedSettingsProfileIndexRouteImport } from './routes/
 import { Route as AuthMfaSetupRequiredIndexRouteImport } from './routes/auth/mfa/setup-required/index'
 import { Route as AuthProvidersProviderIndexRouteImport } from './routes/auth/providers/$provider/index'
 import { Route as AuthResetPasswordIdIndexRouteImport } from './routes/auth/reset-password/$id/index'
+import { Route as BSlugFChar123FolderIdChar125RouteImport } from './routes/b/$slug/f/{-$folderId}'
 import { Route as AuthenticatedBucketsBucketIdFilesChar123FolderIdChar125RouteImport } from './routes/_authenticated/buckets/$bucketId/files/{-$folderId}'
 import { Route as InvitesIdChallengesChallengeIdIndexRouteImport } from './routes/invites/$id/challenges/$challengeId/index'
 
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AuthenticatedRoute,
+const PendingApprovalRoute = PendingApprovalRouteImport.update({
+  id: '/pending-approval',
+  path: '/pending-approval',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SearchRoute = SearchRouteImport.update({
+  id: '/search',
+  path: '/search',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedReviewsRoute = AuthenticatedReviewsRouteImport.update({
+  id: '/reviews',
+  path: '/reviews',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const BSlugRoute = BSlugRouteImport.update({
+  id: '/b/$slug',
+  path: '/b/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedActivityIndexRoute =
   AuthenticatedActivityIndexRouteImport.update({
     id: '/activity/',
     path: '/activity/',
     getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedAdminApprovalsRoute =
+  AuthenticatedAdminApprovalsRouteImport.update({
+    id: '/approvals',
+    path: '/approvals',
+    getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
 const AuthenticatedBucketsBucketIdRoute =
   AuthenticatedBucketsBucketIdRouteImport.update({
@@ -71,6 +113,12 @@ const AuthenticatedSettingsIndexRoute =
   AuthenticatedSettingsIndexRouteImport.update({
     id: '/settings/',
     path: '/settings/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedSettingsUsageRoute =
+  AuthenticatedSettingsUsageRouteImport.update({
+    id: '/settings/usage',
+    path: '/settings/usage',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthCompleteIndexRoute = AuthCompleteIndexRouteImport.update({
@@ -88,10 +136,25 @@ const AuthMfaIndexRoute = AuthMfaIndexRouteImport.update({
   path: '/auth/mfa/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthRegisterIndexRoute = AuthRegisterIndexRouteImport.update({
+  id: '/auth/register/',
+  path: '/auth/register/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRegisterVerifyRoute = AuthRegisterVerifyRouteImport.update({
+  id: '/auth/register/verify',
+  path: '/auth/register/verify',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthResetPasswordIndexRoute = AuthResetPasswordIndexRouteImport.update({
   id: '/auth/reset-password/',
   path: '/auth/reset-password/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const BSlugIndexRoute = BSlugIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => BSlugRoute,
 } as any)
 const InvitesIdIndexRoute = InvitesIdIndexRouteImport.update({
   id: '/invites/$id/',
@@ -205,6 +268,12 @@ const AuthResetPasswordIdIndexRoute =
     path: '/auth/reset-password/$id/',
     getParentRoute: () => rootRouteImport,
   } as any)
+const BSlugFChar123FolderIdChar125Route =
+  BSlugFChar123FolderIdChar125RouteImport.update({
+    id: '/f/{-$folderId}',
+    path: '/f/{-$folderId}',
+    getParentRoute: () => BSlugRoute,
+  } as any)
 const AuthenticatedBucketsBucketIdFilesChar123FolderIdChar125Route =
   AuthenticatedBucketsBucketIdFilesChar123FolderIdChar125RouteImport.update({
     id: '/files/{-$folderId}',
@@ -219,15 +288,25 @@ const InvitesIdChallengesChallengeIdIndexRoute =
   } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof AuthenticatedIndexRoute
+  '/': typeof IndexRoute
+  '/pending-approval': typeof PendingApprovalRoute
+  '/search': typeof SearchRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/reviews': typeof AuthenticatedReviewsRoute
+  '/b/$slug': typeof BSlugRouteWithChildren
+  '/admin/approvals': typeof AuthenticatedAdminApprovalsRoute
   '/buckets/$bucketId': typeof AuthenticatedBucketsBucketIdRouteWithChildren
+  '/settings/usage': typeof AuthenticatedSettingsUsageRoute
+  '/auth/register/verify': typeof AuthRegisterVerifyRoute
   '/activity/': typeof AuthenticatedActivityIndexRoute
   '/settings/': typeof AuthenticatedSettingsIndexRoute
   '/auth/complete/': typeof AuthCompleteIndexRoute
   '/auth/login/': typeof AuthLoginIndexRoute
   '/auth/mfa/': typeof AuthMfaIndexRoute
+  '/auth/register/': typeof AuthRegisterIndexRoute
   '/auth/reset-password/': typeof AuthResetPasswordIndexRoute
+  '/b/$slug/': typeof BSlugIndexRoute
   '/invites/$id/': typeof InvitesIdIndexRoute
   '/shares/$path/': typeof SharesPathIndexRoute
   '/admin/settings/details': typeof AuthenticatedAdminSettingsDetailsRoute
@@ -236,6 +315,7 @@ export interface FileRoutesByFullPath {
   '/buckets/$bucketId/settings': typeof AuthenticatedBucketsBucketIdSettingsRoute
   '/buckets/$bucketId/shares': typeof AuthenticatedBucketsBucketIdSharesRoute
   '/buckets/$bucketId/trash': typeof AuthenticatedBucketsBucketIdTrashRoute
+  '/b/$slug/f/{-$folderId}': typeof BSlugFChar123FolderIdChar125Route
   '/admin/activity/': typeof AuthenticatedAdminActivityIndexRoute
   '/admin/buckets/': typeof AuthenticatedAdminBucketsIndexRoute
   '/admin/dashboard/': typeof AuthenticatedAdminDashboardIndexRoute
@@ -251,14 +331,23 @@ export interface FileRoutesByFullPath {
   '/invites/$id/challenges/$challengeId/': typeof InvitesIdChallengesChallengeIdIndexRoute
 }
 export interface FileRoutesByTo {
+  '/': typeof IndexRoute
+  '/pending-approval': typeof PendingApprovalRoute
+  '/search': typeof SearchRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
-  '/': typeof AuthenticatedIndexRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/reviews': typeof AuthenticatedReviewsRoute
+  '/admin/approvals': typeof AuthenticatedAdminApprovalsRoute
+  '/settings/usage': typeof AuthenticatedSettingsUsageRoute
+  '/auth/register/verify': typeof AuthRegisterVerifyRoute
   '/activity': typeof AuthenticatedActivityIndexRoute
   '/settings': typeof AuthenticatedSettingsIndexRoute
   '/auth/complete': typeof AuthCompleteIndexRoute
   '/auth/login': typeof AuthLoginIndexRoute
   '/auth/mfa': typeof AuthMfaIndexRoute
+  '/auth/register': typeof AuthRegisterIndexRoute
   '/auth/reset-password': typeof AuthResetPasswordIndexRoute
+  '/b/$slug': typeof BSlugIndexRoute
   '/invites/$id': typeof InvitesIdIndexRoute
   '/shares/$path': typeof SharesPathIndexRoute
   '/admin/settings/details': typeof AuthenticatedAdminSettingsDetailsRoute
@@ -267,6 +356,7 @@ export interface FileRoutesByTo {
   '/buckets/$bucketId/settings': typeof AuthenticatedBucketsBucketIdSettingsRoute
   '/buckets/$bucketId/shares': typeof AuthenticatedBucketsBucketIdSharesRoute
   '/buckets/$bucketId/trash': typeof AuthenticatedBucketsBucketIdTrashRoute
+  '/b/$slug/f/{-$folderId}': typeof BSlugFChar123FolderIdChar125Route
   '/admin/activity': typeof AuthenticatedAdminActivityIndexRoute
   '/admin/buckets': typeof AuthenticatedAdminBucketsIndexRoute
   '/admin/dashboard': typeof AuthenticatedAdminDashboardIndexRoute
@@ -283,16 +373,26 @@ export interface FileRoutesByTo {
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/pending-approval': typeof PendingApprovalRoute
+  '/search': typeof SearchRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
-  '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/reviews': typeof AuthenticatedReviewsRoute
+  '/b/$slug': typeof BSlugRouteWithChildren
+  '/_authenticated/admin/approvals': typeof AuthenticatedAdminApprovalsRoute
   '/_authenticated/buckets/$bucketId': typeof AuthenticatedBucketsBucketIdRouteWithChildren
+  '/_authenticated/settings/usage': typeof AuthenticatedSettingsUsageRoute
+  '/auth/register/verify': typeof AuthRegisterVerifyRoute
   '/_authenticated/activity/': typeof AuthenticatedActivityIndexRoute
   '/_authenticated/settings/': typeof AuthenticatedSettingsIndexRoute
   '/auth/complete/': typeof AuthCompleteIndexRoute
   '/auth/login/': typeof AuthLoginIndexRoute
   '/auth/mfa/': typeof AuthMfaIndexRoute
+  '/auth/register/': typeof AuthRegisterIndexRoute
   '/auth/reset-password/': typeof AuthResetPasswordIndexRoute
+  '/b/$slug/': typeof BSlugIndexRoute
   '/invites/$id/': typeof InvitesIdIndexRoute
   '/shares/$path/': typeof SharesPathIndexRoute
   '/_authenticated/admin/settings/details': typeof AuthenticatedAdminSettingsDetailsRoute
@@ -301,6 +401,7 @@ export interface FileRoutesById {
   '/_authenticated/buckets/$bucketId/settings': typeof AuthenticatedBucketsBucketIdSettingsRoute
   '/_authenticated/buckets/$bucketId/shares': typeof AuthenticatedBucketsBucketIdSharesRoute
   '/_authenticated/buckets/$bucketId/trash': typeof AuthenticatedBucketsBucketIdTrashRoute
+  '/b/$slug/f/{-$folderId}': typeof BSlugFChar123FolderIdChar125Route
   '/_authenticated/admin/activity/': typeof AuthenticatedAdminActivityIndexRoute
   '/_authenticated/admin/buckets/': typeof AuthenticatedAdminBucketsIndexRoute
   '/_authenticated/admin/dashboard/': typeof AuthenticatedAdminDashboardIndexRoute
@@ -319,14 +420,24 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/pending-approval'
+    | '/search'
     | '/admin'
+    | '/dashboard'
+    | '/reviews'
+    | '/b/$slug'
+    | '/admin/approvals'
     | '/buckets/$bucketId'
+    | '/settings/usage'
+    | '/auth/register/verify'
     | '/activity/'
     | '/settings/'
     | '/auth/complete/'
     | '/auth/login/'
     | '/auth/mfa/'
+    | '/auth/register/'
     | '/auth/reset-password/'
+    | '/b/$slug/'
     | '/invites/$id/'
     | '/shares/$path/'
     | '/admin/settings/details'
@@ -335,6 +446,7 @@ export interface FileRouteTypes {
     | '/buckets/$bucketId/settings'
     | '/buckets/$bucketId/shares'
     | '/buckets/$bucketId/trash'
+    | '/b/$slug/f/{-$folderId}'
     | '/admin/activity/'
     | '/admin/buckets/'
     | '/admin/dashboard/'
@@ -350,14 +462,23 @@ export interface FileRouteTypes {
     | '/invites/$id/challenges/$challengeId/'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/admin'
     | '/'
+    | '/pending-approval'
+    | '/search'
+    | '/admin'
+    | '/dashboard'
+    | '/reviews'
+    | '/admin/approvals'
+    | '/settings/usage'
+    | '/auth/register/verify'
     | '/activity'
     | '/settings'
     | '/auth/complete'
     | '/auth/login'
     | '/auth/mfa'
+    | '/auth/register'
     | '/auth/reset-password'
+    | '/b/$slug'
     | '/invites/$id'
     | '/shares/$path'
     | '/admin/settings/details'
@@ -366,6 +487,7 @@ export interface FileRouteTypes {
     | '/buckets/$bucketId/settings'
     | '/buckets/$bucketId/shares'
     | '/buckets/$bucketId/trash'
+    | '/b/$slug/f/{-$folderId}'
     | '/admin/activity'
     | '/admin/buckets'
     | '/admin/dashboard'
@@ -381,16 +503,26 @@ export interface FileRouteTypes {
     | '/invites/$id/challenges/$challengeId'
   id:
     | '__root__'
+    | '/'
     | '/_authenticated'
+    | '/pending-approval'
+    | '/search'
     | '/_authenticated/admin'
-    | '/_authenticated/'
+    | '/_authenticated/dashboard'
+    | '/_authenticated/reviews'
+    | '/b/$slug'
+    | '/_authenticated/admin/approvals'
     | '/_authenticated/buckets/$bucketId'
+    | '/_authenticated/settings/usage'
+    | '/auth/register/verify'
     | '/_authenticated/activity/'
     | '/_authenticated/settings/'
     | '/auth/complete/'
     | '/auth/login/'
     | '/auth/mfa/'
+    | '/auth/register/'
     | '/auth/reset-password/'
+    | '/b/$slug/'
     | '/invites/$id/'
     | '/shares/$path/'
     | '/_authenticated/admin/settings/details'
@@ -399,6 +531,7 @@ export interface FileRouteTypes {
     | '/_authenticated/buckets/$bucketId/settings'
     | '/_authenticated/buckets/$bucketId/shares'
     | '/_authenticated/buckets/$bucketId/trash'
+    | '/b/$slug/f/{-$folderId}'
     | '/_authenticated/admin/activity/'
     | '/_authenticated/admin/buckets/'
     | '/_authenticated/admin/dashboard/'
@@ -415,10 +548,16 @@ export interface FileRouteTypes {
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
+  IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  PendingApprovalRoute: typeof PendingApprovalRoute
+  SearchRoute: typeof SearchRoute
+  BSlugRoute: typeof BSlugRouteWithChildren
+  AuthRegisterVerifyRoute: typeof AuthRegisterVerifyRoute
   AuthCompleteIndexRoute: typeof AuthCompleteIndexRoute
   AuthLoginIndexRoute: typeof AuthLoginIndexRoute
   AuthMfaIndexRoute: typeof AuthMfaIndexRoute
+  AuthRegisterIndexRoute: typeof AuthRegisterIndexRoute
   AuthResetPasswordIndexRoute: typeof AuthResetPasswordIndexRoute
   InvitesIdIndexRoute: typeof InvitesIdIndexRoute
   SharesPathIndexRoute: typeof SharesPathIndexRoute
@@ -430,6 +569,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated': {
       id: '/_authenticated'
       path: ''
@@ -437,12 +583,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/': {
-      id: '/_authenticated/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedIndexRouteImport
-      parentRoute: typeof AuthenticatedRoute
+    '/pending-approval': {
+      id: '/pending-approval'
+      path: '/pending-approval'
+      fullPath: '/pending-approval'
+      preLoaderRoute: typeof PendingApprovalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/search': {
+      id: '/search'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof SearchRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admin': {
       id: '/_authenticated/admin'
@@ -451,12 +604,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/reviews': {
+      id: '/_authenticated/reviews'
+      path: '/reviews'
+      fullPath: '/reviews'
+      preLoaderRoute: typeof AuthenticatedReviewsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/b/$slug': {
+      id: '/b/$slug'
+      path: '/b/$slug'
+      fullPath: '/b/$slug'
+      preLoaderRoute: typeof BSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/activity/': {
       id: '/_authenticated/activity/'
       path: '/activity'
       fullPath: '/activity/'
       preLoaderRoute: typeof AuthenticatedActivityIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/admin/approvals': {
+      id: '/_authenticated/admin/approvals'
+      path: '/approvals'
+      fullPath: '/admin/approvals'
+      preLoaderRoute: typeof AuthenticatedAdminApprovalsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
     }
     '/_authenticated/buckets/$bucketId': {
       id: '/_authenticated/buckets/$bucketId'
@@ -470,6 +651,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings/'
       preLoaderRoute: typeof AuthenticatedSettingsIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/settings/usage': {
+      id: '/_authenticated/settings/usage'
+      path: '/settings/usage'
+      fullPath: '/settings/usage'
+      preLoaderRoute: typeof AuthenticatedSettingsUsageRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/auth/complete/': {
@@ -493,12 +681,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthMfaIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth/register/': {
+      id: '/auth/register/'
+      path: '/auth/register'
+      fullPath: '/auth/register/'
+      preLoaderRoute: typeof AuthRegisterIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/register/verify': {
+      id: '/auth/register/verify'
+      path: '/auth/register/verify'
+      fullPath: '/auth/register/verify'
+      preLoaderRoute: typeof AuthRegisterVerifyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth/reset-password/': {
       id: '/auth/reset-password/'
       path: '/auth/reset-password'
       fullPath: '/auth/reset-password/'
       preLoaderRoute: typeof AuthResetPasswordIndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/b/$slug/': {
+      id: '/b/$slug/'
+      path: '/'
+      fullPath: '/b/$slug/'
+      preLoaderRoute: typeof BSlugIndexRouteImport
+      parentRoute: typeof BSlugRoute
     }
     '/invites/$id/': {
       id: '/invites/$id/'
@@ -633,6 +842,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthResetPasswordIdIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/b/$slug/f/{-$folderId}': {
+      id: '/b/$slug/f/{-$folderId}'
+      path: '/f/{-$folderId}'
+      fullPath: '/b/$slug/f/{-$folderId}'
+      preLoaderRoute: typeof BSlugFChar123FolderIdChar125RouteImport
+      parentRoute: typeof BSlugRoute
+    }
     '/_authenticated/buckets/$bucketId/files/{-$folderId}': {
       id: '/_authenticated/buckets/$bucketId/files/{-$folderId}'
       path: '/files/{-$folderId}'
@@ -651,6 +867,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminApprovalsRoute: typeof AuthenticatedAdminApprovalsRoute
   AuthenticatedAdminSettingsDetailsRoute: typeof AuthenticatedAdminSettingsDetailsRoute
   AuthenticatedAdminActivityIndexRoute: typeof AuthenticatedAdminActivityIndexRoute
   AuthenticatedAdminBucketsIndexRoute: typeof AuthenticatedAdminBucketsIndexRoute
@@ -660,6 +877,7 @@ interface AuthenticatedAdminRouteChildren {
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminApprovalsRoute: AuthenticatedAdminApprovalsRoute,
   AuthenticatedAdminSettingsDetailsRoute:
     AuthenticatedAdminSettingsDetailsRoute,
   AuthenticatedAdminActivityIndexRoute: AuthenticatedAdminActivityIndexRoute,
@@ -707,8 +925,10 @@ const AuthenticatedBucketsBucketIdRouteWithChildren =
 
 interface AuthenticatedRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
-  AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedReviewsRoute: typeof AuthenticatedReviewsRoute
   AuthenticatedBucketsBucketIdRoute: typeof AuthenticatedBucketsBucketIdRouteWithChildren
+  AuthenticatedSettingsUsageRoute: typeof AuthenticatedSettingsUsageRoute
   AuthenticatedActivityIndexRoute: typeof AuthenticatedActivityIndexRoute
   AuthenticatedSettingsIndexRoute: typeof AuthenticatedSettingsIndexRoute
   AuthenticatedSettingsPreferencesIndexRoute: typeof AuthenticatedSettingsPreferencesIndexRoute
@@ -717,9 +937,11 @@ interface AuthenticatedRouteChildren {
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
-  AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedReviewsRoute: AuthenticatedReviewsRoute,
   AuthenticatedBucketsBucketIdRoute:
     AuthenticatedBucketsBucketIdRouteWithChildren,
+  AuthenticatedSettingsUsageRoute: AuthenticatedSettingsUsageRoute,
   AuthenticatedActivityIndexRoute: AuthenticatedActivityIndexRoute,
   AuthenticatedSettingsIndexRoute: AuthenticatedSettingsIndexRoute,
   AuthenticatedSettingsPreferencesIndexRoute:
@@ -732,11 +954,29 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
   AuthenticatedRouteChildren,
 )
 
+interface BSlugRouteChildren {
+  BSlugIndexRoute: typeof BSlugIndexRoute
+  BSlugFChar123FolderIdChar125Route: typeof BSlugFChar123FolderIdChar125Route
+}
+
+const BSlugRouteChildren: BSlugRouteChildren = {
+  BSlugIndexRoute: BSlugIndexRoute,
+  BSlugFChar123FolderIdChar125Route: BSlugFChar123FolderIdChar125Route,
+}
+
+const BSlugRouteWithChildren = BSlugRoute._addFileChildren(BSlugRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
+  IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  PendingApprovalRoute: PendingApprovalRoute,
+  SearchRoute: SearchRoute,
+  BSlugRoute: BSlugRouteWithChildren,
+  AuthRegisterVerifyRoute: AuthRegisterVerifyRoute,
   AuthCompleteIndexRoute: AuthCompleteIndexRoute,
   AuthLoginIndexRoute: AuthLoginIndexRoute,
   AuthMfaIndexRoute: AuthMfaIndexRoute,
+  AuthRegisterIndexRoute: AuthRegisterIndexRoute,
   AuthResetPasswordIndexRoute: AuthResetPasswordIndexRoute,
   InvitesIdIndexRoute: InvitesIdIndexRoute,
   SharesPathIndexRoute: SharesPathIndexRoute,

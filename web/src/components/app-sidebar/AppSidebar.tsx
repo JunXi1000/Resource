@@ -51,7 +51,7 @@ export const AppSidebar: FC = () => {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <Link to="/" className="cursor-pointer">
+            <Link to="/dashboard" className="cursor-pointer">
               <img src="/safebucket_banner.png" alt="SafeBucket Logo" />
             </Link>
             <Separator className="mt-2" />
@@ -112,6 +112,32 @@ export const AppSidebar: FC = () => {
               </SidebarGroup>
             </SidebarMenu>
           )}
+          <SidebarMenu>
+            <SidebarGroup>
+              {nav.moderation.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild tooltip={t(item.title)}>
+                    <div>
+                      <item.icon />
+                      {t(item.title)}
+                    </div>
+                  </SidebarMenuButton>
+                  <SidebarMenuSub>
+                    {item.items.map((subItem) => (
+                      <SidebarMenuSubItem key={subItem.title}>
+                        <SidebarMenuSubButton
+                          asChild
+                          isActive={location.pathname.startsWith(subItem.url)}
+                        >
+                          <Link to={subItem.url}>{t(subItem.title)}</Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                    ))}
+                  </SidebarMenuSub>
+                </SidebarMenuItem>
+              ))}
+            </SidebarGroup>
+          </SidebarMenu>
           <SidebarGroup>
             <SidebarMenuItem key="shared_buckets">
               <SidebarMenuButton

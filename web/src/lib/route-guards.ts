@@ -49,7 +49,7 @@ export async function requireAdmin({
 
   if (session.role !== "admin") {
     throw redirect({
-      to: "/",
+      to: "/dashboard",
     });
   }
 }

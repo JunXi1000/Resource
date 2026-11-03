@@ -9,4 +9,6 @@ export interface IConfig {
   requiresUploadConfirmation: boolean;
   trashRetentionDays: number;
   allowCustomShareIDs: boolean;
+  registrationEnabled: boolean;
+  publicCatalogEnabled: boolean;
 }

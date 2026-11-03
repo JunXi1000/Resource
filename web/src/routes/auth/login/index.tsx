@@ -22,9 +22,10 @@ import { Label } from "@/components/ui/label";
 import { authProvidersQueryOptions } from "@/queries/auth_providers.ts";
 import { ProviderType } from "@/types/auth_providers.ts";
 import { AuthProvidersButtons } from "@/components/auth-providers-buttons/AuthProvidersButtons.tsx";
+import { useConfig } from "@/hooks/useConfig.ts";
 
 export const Route = createFileRoute("/auth/login/")({
-  validateSearch: (search: Record<string, unknown>) => {
+  validateSearch: (search: Record<string, unknown>): { redirect?: string } => {
     return {
       redirect: (search.redirect as string) || undefined,
     };
@@ -38,6 +39,7 @@ function Login() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { redirect } = Route.useSearch();
+  const config = useConfig();
   const providersQuery = useSuspenseQuery(authProvidersQueryOptions());
   const providers = providersQuery.data;
 
@@ -64,7 +66,7 @@ function Login() {
         search: { redirect },
       });
     } else if (result.success) {
-      navigate({ to: redirect || "/" });
+      navigate({ to: redirect || "/dashboard" });
     } else {
       const translated = result.error
         ? t(`errors.${result.error}`, { defaultValue: "" })
@@ -148,6 +150,18 @@ function Login() {
                 </Button>
               </form>
             </>
+          )}
+
+          {config.registrationEnabled && (
+            <p className="text-muted-foreground mt-4 text-center text-sm">
+              {t("auth.no_account")}{" "}
+              <Link
+                to="/auth/register"
+                className="text-primary font-medium hover:underline"
+              >
+                {t("auth.sign_up")}
+              </Link>
+            </p>
           )}
         </CardContent>
       </Card>

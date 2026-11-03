@@ -73,7 +73,7 @@ export function MFASetupRequiredView({
     if (viewMode === "success") {
       setTimeout(() => {
         void refreshSession();
-        navigate({ to: redirectPath || "/" });
+        navigate({ to: redirectPath || "/dashboard" });
       }, MFA_SUCCESS_REDIRECT_DELAY);
     }
   }, [viewMode, navigate, redirectPath, refreshSession]);
