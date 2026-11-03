@@ -11,6 +11,13 @@ export interface IBucket {
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
+  // Public catalog fields. A bucket is listed at /b/{slug} only when
+  // is_public is true and the slug is set.
+  is_public?: boolean;
+  slug?: string | null;
+  category?: string | null;
+  tags?: Array<string>;
+  published_at?: string | null;
 }
 
 export type BucketItem = IFile | IFolder;

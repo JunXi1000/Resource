@@ -1,6 +1,7 @@
 import { Ellipsis, Eye, Trash2 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import type { FC } from "react";
+import { useTranslation } from "react-i18next";
 import type { IAdminBucket } from "@/types/admin.ts";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,6 +20,8 @@ export const BucketRowActions: FC<BucketRowActionsProps> = ({
   bucket,
   onDelete,
 }) => {
+  const { t } = useTranslation();
+
   return (
     <div onClick={(e) => e.stopPropagation()}>
       <DropdownMenu>
@@ -28,7 +31,7 @@ export const BucketRowActions: FC<BucketRowActionsProps> = ({
             className="data-[state=open]:bg-muted flex h-8 w-8 p-0"
           >
             <Ellipsis className="h-4 w-4" />
-            <span className="sr-only">Open bucket actions</span>
+            <span className="sr-only">{t("admin.buckets.open_actions")}</span>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">

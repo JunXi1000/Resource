@@ -1,5 +1,6 @@
 import { Ellipsis, Trash2 } from "lucide-react";
 import type { FC } from "react";
+import { useTranslation } from "react-i18next";
 import type { IAdminUser } from "@/components/auth-view/types/session";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,6 +21,8 @@ export const UserRowActions: FC<UserRowActionsProps> = ({
   onDelete,
   isCurrentUser,
 }) => {
+  const { t } = useTranslation();
+
   return (
     <div onClick={(e) => e.stopPropagation()}>
       <DropdownMenu>
@@ -29,7 +32,7 @@ export const UserRowActions: FC<UserRowActionsProps> = ({
             className="data-[state=open]:bg-muted flex h-8 w-8 p-0"
           >
             <Ellipsis className="h-4 w-4" />
-            <span className="sr-only">Open user actions</span>
+            <span className="sr-only">{t("admin.users.open_actions")}</span>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">

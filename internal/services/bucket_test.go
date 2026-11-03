@@ -2,10 +2,13 @@ package services
 
 import (
 	"encoding/json"
+	"net/http"
 	"testing"
 
 	"github.com/safebucket/safebucket/internal/activity"
+	apierrors "github.com/safebucket/safebucket/internal/errors"
 	"github.com/safebucket/safebucket/internal/models"
+	"github.com/safebucket/safebucket/internal/sql"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -204,4 +207,196 @@ func TestUpdateBucketDescriptionOnlyLogsBucketUpdatedActivity(t *testing.T) {
 	require.True(t, ok)
 	assert.Equal(t, bucket.ID.String(), object["id"])
 	assert.Equal(t, "docs", object["name"])
+}
+
+// publishBody builds the minimal "make this bucket public" payload.
+func publishBody(name, slug string) models.BucketCreateUpdateBody {
+	public := true
+	return models.BucketCreateUpdateBody{Name: name, IsPublic: &public, Slug: &slug}
+}
+
+func TestUpdateBucketPublishesAndAppearsInPublicCatalog(t *testing.T) {
+	service, user := newBucketServiceTestFixture(t)
+	bucket := createTestBucket(t, service, user, models.BucketCreateUpdateBody{Name: "team docs"})
+
+	err := service.UpdateBucket(
+		zap.NewNop(),
+		models.UserClaims{UserID: user.ID},
+		uuid.UUIDs{bucket.ID},
+		publishBody("team docs", "team-docs"),
+	)
+	require.NoError(t, err)
+
+	var persisted models.Bucket
+	require.NoError(t, service.DB.First(&persisted, "id = ?", bucket.ID).Error)
+	assert.True(t, persisted.IsPublic)
+	require.NotNil(t, persisted.Slug)
+	assert.Equal(t, "team-docs", *persisted.Slug)
+	assert.NotNil(t, persisted.PublishedAt)
+
+	// The point of the write path: what gets written is what the anonymous
+	// catalog can read.
+	items, _, listErr := sql.ListPublicBuckets(service.DB, models.PublicBucketQuery{})
+	require.NoError(t, listErr)
+	require.Len(t, items, 1)
+	assert.Equal(t, "team-docs", *items[0].Slug)
+}
+
+func TestUpdateBucketDerivesSlugFromNameWhenPublishing(t *testing.T) {
+	service, user := newBucketServiceTestFixture(t)
+	bucket := createTestBucket(t, service, user, models.BucketCreateUpdateBody{Name: "Team Docs (EU)"})
+	clearOutbox(t, service.DB)
+
+	public := true
+	err := service.UpdateBucket(
+		zap.NewNop(),
+		models.UserClaims{UserID: user.ID},
+		uuid.UUIDs{bucket.ID},
+		models.BucketCreateUpdateBody{Name: "Team Docs (EU)", IsPublic: &public},
+	)
+	require.NoError(t, err)
+
+	var persisted models.Bucket
+	require.NoError(t, service.DB.First(&persisted, "id = ?", bucket.ID).Error)
+	require.NotNil(t, persisted.Slug)
+	assert.Equal(t, "team-docs-eu", *persisted.Slug)
+}
+
+func TestUpdateBucketRejectsPublishWithoutUsableSlug(t *testing.T) {
+	service, user := newBucketServiceTestFixture(t)
+	bucket := createTestBucket(t, service, user, models.BucketCreateUpdateBody{Name: "文档"})
+
+	public := true
+	err := service.UpdateBucket(
+		zap.NewNop(),
+		models.UserClaims{UserID: user.ID},
+		uuid.UUIDs{bucket.ID},
+		models.BucketCreateUpdateBody{Name: "文档", IsPublic: &public},
+	)
+
+	var apiErr *apierrors.APIError
+	require.ErrorAs(t, err, &apiErr)
+	assert.Equal(t, http.StatusBadRequest, apiErr.Status)
+	assert.Equal(t, apierrors.CodeInvalidSlug, apiErr.Code)
+
+	var persisted models.Bucket
+	require.NoError(t, service.DB.First(&persisted, "id = ?", bucket.ID).Error)
+	assert.False(t, persisted.IsPublic, "a failed publish must not half-apply")
+}
+
+func TestUpdateBucketRejectsDuplicateSlug(t *testing.T) {
+	service, user := newBucketServiceTestFixture(t)
+	first := createTestBucket(t, service, user, models.BucketCreateUpdateBody{Name: "first"})
+	second := createTestBucket(t, service, user, models.BucketCreateUpdateBody{Name: "second"})
+
+	require.NoError(t, service.UpdateBucket(
+		zap.NewNop(),
+		models.UserClaims{UserID: user.ID},
+		uuid.UUIDs{first.ID},
+		publishBody("first", "shared-slug"),
+	))
+
+	err := service.UpdateBucket(
+		zap.NewNop(),
+		models.UserClaims{UserID: user.ID},
+		uuid.UUIDs{second.ID},
+		publishBody("second", "SHARED-SLUG"),
+	)
+
+	var apiErr *apierrors.APIError
+	require.ErrorAs(t, err, &apiErr)
+	assert.Equal(t, http.StatusConflict, apiErr.Status)
+	assert.Equal(t, apierrors.CodeSlugTaken, apiErr.Code)
+}
+
+func TestUpdateBucketAllowsItsOwnSlugOnRename(t *testing.T) {
+	service, user := newBucketServiceTestFixture(t)
+	bucket := createTestBucket(t, service, user, models.BucketCreateUpdateBody{Name: "docs"})
+
+	require.NoError(t, service.UpdateBucket(
+		zap.NewNop(),
+		models.UserClaims{UserID: user.ID},
+		uuid.UUIDs{bucket.ID},
+		publishBody("docs", "docs"),
+	))
+
+	// Re-saving the same slug (e.g. while editing the description) must not
+	// conflict with itself.
+	require.NoError(t, service.UpdateBucket(
+		zap.NewNop(),
+		models.UserClaims{UserID: user.ID},
+		uuid.UUIDs{bucket.ID},
+		publishBody("docs", "docs"),
+	))
+}
+
+func TestUpdateBucketReplacesTags(t *testing.T) {
+	service, user := newBucketServiceTestFixture(t)
+	bucket := createTestBucket(t, service, user, models.BucketCreateUpdateBody{Name: "docs"})
+
+	category := "documents"
+	body := publishBody("docs", "docs")
+	body.Tags = []string{"manual", "manual", " tutorial ", ""}
+	body.Category = &category
+
+	require.NoError(t, service.UpdateBucket(
+		zap.NewNop(),
+		models.UserClaims{UserID: user.ID},
+		uuid.UUIDs{bucket.ID},
+		body,
+	))
+
+	var tags []models.BucketTag
+	require.NoError(t, service.DB.Where("bucket_id = ?", bucket.ID).Find(&tags).Error)
+	require.Len(t, tags, 2, "duplicates, blanks and padding must be normalised away")
+
+	values := []string{tags[0].Tag, tags[1].Tag}
+	assert.ElementsMatch(t, []string{"manual", "tutorial"}, values)
+
+	// A second update replaces the set instead of appending to it.
+	body.Tags = []string{"release"}
+	require.NoError(t, service.UpdateBucket(
+		zap.NewNop(),
+		models.UserClaims{UserID: user.ID},
+		uuid.UUIDs{bucket.ID},
+		body,
+	))
+
+	tags = nil
+	require.NoError(t, service.DB.Where("bucket_id = ?", bucket.ID).Find(&tags).Error)
+	require.Len(t, tags, 1)
+	assert.Equal(t, "release", tags[0].Tag)
+}
+
+func TestUpdateBucketUnpublishRemovesFromCatalog(t *testing.T) {
+	service, user := newBucketServiceTestFixture(t)
+	bucket := createTestBucket(t, service, user, models.BucketCreateUpdateBody{Name: "docs"})
+
+	require.NoError(t, service.UpdateBucket(
+		zap.NewNop(),
+		models.UserClaims{UserID: user.ID},
+		uuid.UUIDs{bucket.ID},
+		publishBody("docs", "docs"),
+	))
+
+	items, _, err := sql.ListPublicBuckets(service.DB, models.PublicBucketQuery{})
+	require.NoError(t, err)
+	require.Len(t, items, 1)
+
+	hidden := false
+	require.NoError(t, service.UpdateBucket(
+		zap.NewNop(),
+		models.UserClaims{UserID: user.ID},
+		uuid.UUIDs{bucket.ID},
+		models.BucketCreateUpdateBody{Name: "docs", IsPublic: &hidden},
+	))
+
+	items, _, err = sql.ListPublicBuckets(service.DB, models.PublicBucketQuery{})
+	require.NoError(t, err)
+	assert.Empty(t, items)
+
+	var persisted models.Bucket
+	require.NoError(t, service.DB.First(&persisted, "id = ?", bucket.ID).Error)
+	assert.False(t, persisted.IsPublic)
+	require.NotNil(t, persisted.Slug, "the slug is kept so republishing is one toggle")
 }

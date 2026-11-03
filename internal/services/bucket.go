@@ -2,7 +2,10 @@ package services
 
 import (
 	"context"
+	"errors"
 	"net/http"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/safebucket/safebucket/internal/activity"
@@ -262,8 +265,18 @@ func (s BucketService) UpdateBucket(
 			updates["description"] = bucket.Description
 		}
 
+		if err := s.applyCatalogFields(tx, &bucket, body, updates); err != nil {
+			return err
+		}
+
 		if err := tx.Model(&bucket).Updates(updates).Error; err != nil {
 			return err
+		}
+
+		if body.Tags != nil {
+			if err := replaceBucketTags(tx, bucket.ID, body.Tags); err != nil {
+				return err
+			}
 		}
 
 		action := models.Activity{
@@ -280,9 +293,161 @@ func (s BucketService) UpdateBucket(
 		return outbox.AddActivities(tx, action)
 	})
 	if err != nil {
+		var apiErr *apierrors.APIError
+		if errors.As(err, &apiErr) {
+			// Invalid or already-taken slug: the caller needs the real reason,
+			// not a generic "update failed".
+			return apiErr
+		}
+
 		logger.Error("Failed to update bucket", zap.Error(err))
 		return apierrors.New(http.StatusInternalServerError, apierrors.CodeUpdateFailed)
 	}
+
+	return nil
+}
+
+// slugPattern mirrors the request validator (middlewares.allowedSlugChars) so a
+// slug derived from a bucket name can never produce something the API would
+// reject on the next call.
+var slugPattern = regexp.MustCompile(`^[a-z0-9]+(?:-[a-z0-9]+)*$`)
+
+// deriveSlug turns a free-form bucket name into a URL segment: "Team Docs (EU)"
+// becomes "team-docs-eu". Anything that is not a latin letter or digit is
+// collapsed into a single hyphen.
+func deriveSlug(name string) string {
+	var sb strings.Builder
+	pendingDash := false
+
+	for _, r := range strings.ToLower(name) {
+		switch {
+		case (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9'):
+			if pendingDash && sb.Len() > 0 {
+				sb.WriteByte('-')
+			}
+			pendingDash = false
+			sb.WriteRune(r)
+		default:
+			pendingDash = true
+		}
+	}
+
+	return sb.String()
+}
+
+func replaceBucketTags(tx *gorm.DB, bucketID uuid.UUID, tags []string) error {
+	if err := tx.Where("bucket_id = ?", bucketID).Delete(&models.BucketTag{}).Error; err != nil {
+		return err
+	}
+
+	seen := make(map[string]struct{}, len(tags))
+	rows := make([]models.BucketTag, 0, len(tags))
+	for _, tag := range tags {
+		trimmed := strings.TrimSpace(tag)
+		if trimmed == "" {
+			continue
+		}
+		if _, ok := seen[trimmed]; ok {
+			continue
+		}
+		seen[trimmed] = struct{}{}
+		rows = append(rows, models.BucketTag{BucketID: bucketID, Tag: trimmed})
+	}
+
+	if len(rows) == 0 {
+		return nil
+	}
+
+	return tx.Create(&rows).Error
+}
+
+// applyCatalogFields writes the public-catalog columns. Publishing is the only
+// operation that can fail on user input: it needs a slug, and the slug has to
+// be unique across every bucket because it is the public URL.
+//
+// The fields are pointers so that "not sent" and "sent empty" stay
+// distinguishable — omitting them must not unpublish a bucket as a side effect
+// of renaming it.
+func (s BucketService) applyCatalogFields(
+	tx *gorm.DB,
+	bucket *models.Bucket,
+	body models.BucketCreateUpdateBody,
+	updates map[string]any,
+) error {
+	if body.IsPublic == nil && body.Slug == nil && body.Category == nil && body.Tags == nil {
+		return nil
+	}
+
+	isPublic := bucket.IsPublic
+	if body.IsPublic != nil {
+		isPublic = *body.IsPublic
+	}
+
+	rawSlug := ""
+	if bucket.Slug != nil {
+		rawSlug = *bucket.Slug
+	}
+	if body.Slug != nil {
+		rawSlug = *body.Slug
+	}
+
+	slug := ""
+	if strings.TrimSpace(rawSlug) != "" {
+		slug = strings.ToLower(strings.TrimSpace(rawSlug))
+		if !slugPattern.MatchString(slug) {
+			return apierrors.New(http.StatusBadRequest, apierrors.CodeInvalidSlug)
+		}
+	}
+
+	if isPublic && slug == "" {
+		// Publishing without an explicit slug uses the name, which is the only
+		// thing the operator has already typed at that point.
+		name := bucket.Name
+		if body.Name != "" {
+			name = body.Name
+		}
+		slug = deriveSlug(name)
+		if len(slug) < 3 || !slugPattern.MatchString(slug) {
+			return apierrors.New(http.StatusBadRequest, apierrors.CodeInvalidSlug)
+		}
+	}
+
+	if slug != "" {
+		var conflict int64
+		query := tx.Model(&models.Bucket{}).Where("LOWER(slug) = ?", slug)
+		if bucket.ID != uuid.Nil {
+			query = query.Where("id <> ?", bucket.ID)
+		}
+		if err := query.Count(&conflict).Error; err != nil {
+			return err
+		}
+		if conflict > 0 {
+			return apierrors.New(http.StatusConflict, apierrors.CodeSlugTaken)
+		}
+	}
+
+	updates["is_public"] = isPublic
+	if slug == "" {
+		updates["slug"] = nil
+	} else {
+		updates["slug"] = slug
+	}
+
+	if isPublic && bucket.PublishedAt == nil {
+		now := time.Now()
+		updates["published_at"] = now
+	}
+
+	if body.Category != nil {
+		if trimmed := strings.TrimSpace(*body.Category); trimmed == "" {
+			updates["category"] = nil
+		} else {
+			updates["category"] = trimmed
+		}
+	}
+
+	// Keep the in-memory copy consistent for the activity entry below.
+	bucket.IsPublic = isPublic
 
 	return nil
 }

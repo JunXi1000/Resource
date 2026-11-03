@@ -716,3 +716,52 @@ Postgres 侧是 `ALTER TYPE challenge_type ADD VALUE IF NOT EXISTS 'registration
 - **公开页没有上传入口**，也没有"我要贡献"的引导；上传仍然只在登录后的后台完成。
 - **搜索只匹配栏目的名称与描述**（`LOWER(name) LIKE` OR `LOWER(description) LIKE`），不搜标签、不搜文件名。标签是精确筛选（`tag=`），不是模糊检索；`/public/buckets` 的 `q` 语义就是栏目级。
 - **`BucketBrowser` 的站内过滤是"服务端匹配 + 已加载页计数"**：输入经 `useDeferredValue` 去抖后进 `q` 参数，结果由后端过滤，但"命中 N 个"统计的是当前已翻页加载的文件，不是全库命中总数（`/public/buckets/{slug}/files` 不返回 count）。
+
+### 14.6 部署开关
+
+两个开关在二进制里的零值是 `false`，即**升级已有实例不会自动对外开站**，必须显式打开：
+
+```bash
+APP__PUBLIC_CATALOG_ENABLED=true   # 公开目录；关掉时 /public/* 全部 404
+APP__REGISTRATION_ENABLED=true     # 自助注册；关掉时注册页显示"未开放"
+```
+
+`deployments/local/{lite,full}` 的 `.env` 已置为 `true`，并在两个 `docker-compose.yml` 的 `environment` 里透传。**新增变量必须同时加到 compose 的 `environment` 列表**，否则只在 `.env` 里写是不会进容器的（`docker-compose.yml` 是逐项枚举而不是 `env_file`）。
+
+## 15 端到端验证与修复记录
+
+用本地编译的二进制（容器内 `CGO_ENABLED=1 go build`）在独立 SQLite 实例 + 复用 RustFS 网络上跑通全链路，验证过程暴露并修复了两个问题：
+
+### 15.1 修复：公开字段无写入路径（关键缺口）
+
+`is_public` / `slug` / `category` / `tags` 四个字段在模型与迁移里存在，但建桶和改桶只写 `name`/`description`，导致公开目录永远是空集。
+
+修复：`BucketService.UpdateBucket` 补齐写入（仅 owner 可改；`slug` 交给现有校验中间件保证合法与唯一，取消公开时清空 slug）。新增 6 个 `bucket_test.go` 测试：发布、改分类/标签、unpublish 从目录消失、slug 冲突 409、非法 slug 400、非 owner 改公开字段 403。
+
+前端配套：桶设置页新增 `CatalogPublishCard`（开关 + 分类 + 标签编辑 + 公开链接复制），hook `useCatalogPublish.ts` 走 PATCH `/buckets/{id}`。
+
+### 15.2 修复：注册事件未映射 topic 导致进程 Fatal（严重）
+
+`EventRouter.getTopicKeyForEvent` 没有 `RegistrationChallenge` / `RegistrationApproved` / `RegistrationRejected` 三个事件的分支，而未匹配事件走 `zap.Fatal`——**任何人调用注册/审批接口都会直接杀死整个进程**。
+
+修复：
+
+1. 三个事件映射到 notifications topic；
+2. 未映射事件由 `Fatal` 改为 `Error` + 丢弃该消息（单个配置遗漏不应有杀死进程的能力）；
+3. 新增守护测试 `TestEveryRegisteredEventHasTopic`：遍历 `events.EventTypeNames()` 断言每个注册事件都有 topic，新增事件忘配路由时测试先行失败。
+
+### 15.3 验证路径（全部通过）
+
+| 步骤 | 结果 |
+| --- | --- |
+| 匿名访问 `/api/v1/public/buckets`、`/config.json`、`/`（SPA 首页） | 200 |
+| 建桶（创建时不含公开字段，PATCH 发布）→ 匿名列表/详情可见 | ✅ |
+| 预签名直传 → confirm → 文件待审状态对匿名不可见 | ✅ |
+| 审核通过 → 匿名文件列表可见、预签名 URL 下载成功 | ✅ |
+| 注册 → 202 `pending_verification`，验证邮件落盘 | ✅ |
+| 提交验证码 → `pending_approval`；此时登录 → 403 `USER_PENDING_APPROVAL` | ✅ |
+| 管理员审批队列可见（默认配额 20 GiB）→ 批准 | ✅ |
+| 批准邮件落盘（含 20 GiB 配额与登录链接） | ✅ |
+| 被批准账号登录 200，`/users/me/usage` 返回配额用量 | ✅ |
+
+验证环境：`golang:1.27-bookworm` 容器跑二进制，`DATABASE__TYPE=sqlite`，`NOTIFIER__TYPE=filesystem`（邮件写入本地目录便于断言），复用 lite compose 的 RustFS（`bucket:9000`，外部端点 `localhost:9000`）。

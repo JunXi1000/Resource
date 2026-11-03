@@ -24,8 +24,11 @@ func (er *EventRouter) Publish(messages ...*message.Message) error {
 		topicKey := er.getTopicKeyForEvent(eventType)
 
 		if topicKey == "" {
+			// A single unregistered event type must never take down the process:
+			// drop the message and surface it loudly instead.
 			zap.L().
-				Fatal("Assign a topic to this event in getTopicKeyForEvent", zap.String("eventType", eventType))
+				Error("Assign a topic to this event in getTopicKeyForEvent", zap.String("eventType", eventType))
+			continue
 		}
 
 		publisher := er.eventsManager.GetPublisher(topicKey)
@@ -55,7 +58,10 @@ func (er *EventRouter) getTopicKeyForEvent(eventType string) string {
 		events.PasswordResetSuccessName,
 		events.UserWelcomeName,
 		events.MFAResetChallengeName,
-		events.FileActivityNotificationName:
+		events.FileActivityNotificationName,
+		events.RegistrationChallengeName,
+		events.RegistrationApprovedName,
+		events.RegistrationRejectedName:
 		return configuration.EventsNotifications
 	case events.BucketPurgeName,
 		events.ItemsTrashName,

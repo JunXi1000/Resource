@@ -5,8 +5,10 @@ import type { FC } from "react";
 import type { IBucket } from "@/types/bucket.ts";
 import { useBucketDeletion } from "@/components/bucket-view/hooks/useBucketDeletion";
 import { useBucketInformation } from "@/components/bucket-view/hooks/useBucketInformation";
+import { CatalogPublishCard } from "@/components/bucket-view/components/CatalogPublishCard";
 import { QrCodeDialog } from "@/components/common/components/QrCodeDialog.tsx";
 import { useBucketPermissions } from "@/hooks/usePermissions";
+import { useConfig } from "@/hooks/useConfig";
 import { BUCKET_DESCRIPTION_MAX_LENGTH } from "@/components/bucket-view/helpers/constants";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -23,6 +25,7 @@ export const SettingsTab: FC<ISettingsTabProps> = ({
 }: ISettingsTabProps) => {
   const { t } = useTranslation();
   const { isOwner } = useBucketPermissions(bucket.id);
+  const config = useConfig();
   const [qrOpen, setQrOpen] = useState(false);
   const {
     isEditingName,
@@ -215,6 +218,10 @@ export const SettingsTab: FC<ISettingsTabProps> = ({
           </div>
         </div>
       </div>
+
+      {isOwner && config.publicCatalogEnabled ? (
+        <CatalogPublishCard bucket={bucket} />
+      ) : null}
 
       {isOwner ? (
         <div className="bg-card border-destructive/30 overflow-hidden rounded-xl border">

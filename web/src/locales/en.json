@@ -601,6 +601,25 @@
         "qr_title": "Bucket QR code",
         "qr_description": "Scan to open this bucket."
       },
+      "catalog": {
+        "title": "Public catalog",
+        "description": "Publish this collection so anyone can browse it without an account.",
+        "badge_public": "Public",
+        "toggle_label": "List in the public catalog",
+        "toggle_hint": "Only files that passed review are visible to visitors.",
+        "slug_label": "Public URL",
+        "slug_placeholder": "team-docs",
+        "slug_hint": "Lowercase letters, digits and hyphens. Leave empty to derive it from the name.",
+        "category_label": "Category",
+        "category_placeholder": "documents",
+        "tags_label": "Tags",
+        "tags_placeholder": "manual, guide",
+        "tags_hint": "Comma separated. Tags are used for exact filtering, not for search.",
+        "save": "Save",
+        "saving": "Saving...",
+        "published_toast": "Collection is now public.",
+        "unpublished_toast": "Collection is no longer public."
+      },
       "deletion": {
         "title": "Delete this bucket",
         "description": "This will permanently delete the bucket and all the associated files. This action cannot be undone.",
@@ -928,6 +947,7 @@
     "users": {
       "title": "User Management",
       "description": "Manage all users in the system",
+      "open_actions": "Open user actions",
       "add_user": "Add User",
       "no_users": "No users found.",
       "columns": {
@@ -961,6 +981,7 @@
     "buckets": {
       "title": "Bucket Management",
       "description": "Manage all buckets in the system",
+      "open_actions": "Open bucket actions",
       "no_buckets": "No buckets found.",
       "columns": {
         "name": "Name",

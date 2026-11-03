@@ -601,6 +601,25 @@
         "qr_title": "存储桶二维码",
         "qr_description": "扫码打开该存储桶。"
       },
+      "catalog": {
+        "title": "公开栏目",
+        "description": "把该存储桶发布到公开目录，访客无需账号即可浏览。",
+        "badge_public": "已公开",
+        "toggle_label": "在公开目录中展示",
+        "toggle_hint": "只有通过审核的文件对访客可见。",
+        "slug_label": "公开路径",
+        "slug_placeholder": "team-docs",
+        "slug_hint": "仅限小写字母、数字与连字符；留空则按名称自动生成。",
+        "category_label": "分类",
+        "category_placeholder": "documents",
+        "tags_label": "标签",
+        "tags_placeholder": "manual, guide",
+        "tags_hint": "英文逗号分隔。标签用于精确筛选，不参与模糊搜索。",
+        "save": "保存",
+        "saving": "保存中…",
+        "published_toast": "栏目已公开。",
+        "unpublished_toast": "栏目已取消公开。"
+      },
       "deletion": {
         "title": "删除此存储桶",
         "description": "将永久删除该存储桶及其所有文件，此操作无法撤销。",
@@ -928,6 +947,7 @@
     "users": {
       "title": "用户管理",
       "description": "管理系统中的所有用户",
+      "open_actions": "打开用户操作菜单",
       "add_user": "添加用户",
       "no_users": "没有找到用户。",
       "columns": {
@@ -961,6 +981,7 @@
     "buckets": {
       "title": "存储桶管理",
       "description": "管理系统中的所有存储桶",
+      "open_actions": "打开存储桶操作菜单",
       "no_buckets": "没有找到存储桶。",
       "columns": {
         "name": "名称",
