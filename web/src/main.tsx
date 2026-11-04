@@ -16,6 +16,7 @@ import { TimeDisplayProvider } from "@/components/time-display/context/TimeDispl
 import { SidebarProvider } from "@/components/ui/sidebar.tsx";
 import { TooltipProvider } from "@/components/ui/tooltip.tsx";
 import { UploadProvider } from "@/components/upload/context/UploadProvider.tsx";
+import { AuthDialogProvider } from "@/components/auth-view/AuthDialogProvider.tsx";
 import { InkProvider } from "@/lib/ink/react";
 
 import "@fontsource-variable/inter";
@@ -87,9 +88,11 @@ async function initializeApp() {
               <TimeDisplayProvider>
                 <SidebarProvider>
                   <TooltipProvider>
-                    <UploadProvider>
-                      <RouterProvider router={router} />
-                    </UploadProvider>
+                    <AuthDialogProvider>
+                      <UploadProvider>
+                        <RouterProvider router={router} />
+                      </UploadProvider>
+                    </AuthDialogProvider>
                   </TooltipProvider>
                 </SidebarProvider>
               </TimeDisplayProvider>

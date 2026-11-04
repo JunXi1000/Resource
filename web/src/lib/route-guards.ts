@@ -3,6 +3,7 @@ import type { QueryClient } from "@tanstack/react-query";
 
 import type { Session } from "@/components/auth-view/types/session";
 import { meQueryOptions } from "@/queries/me";
+import { openAuthDialog } from "@/components/auth-view/AuthDialogProvider";
 
 async function resolveSession(
   queryClient: QueryClient,
@@ -10,6 +11,12 @@ async function resolveSession(
   return queryClient.ensureQueryData(meQueryOptions()).catch(() => null);
 }
 
+/**
+ * Soft auth gate: instead of sending anonymous visitors to a standalone
+ * login page, drop them on the public catalog and pop the sign-in dialog
+ * (remembering where they wanted to go). After a successful login the
+ * dialog navigates back to the original destination.
+ */
 export async function requireAuth({
   location,
   context,
@@ -20,12 +27,8 @@ export async function requireAuth({
   const session = await resolveSession(context.queryClient);
 
   if (!session) {
-    throw redirect({
-      to: "/auth/login",
-      search: {
-        redirect: location.href,
-      },
-    });
+    openAuthDialog(location.href);
+    throw redirect({ to: "/", search: {} });
   }
 }
 
@@ -39,12 +42,8 @@ export async function requireAdmin({
   const session = await resolveSession(context.queryClient);
 
   if (!session) {
-    throw redirect({
-      to: "/auth/login",
-      search: {
-        redirect: location.href,
-      },
-    });
+    openAuthDialog(location.href);
+    throw redirect({ to: "/", search: {} });
   }
 
   if (session.role !== "admin") {

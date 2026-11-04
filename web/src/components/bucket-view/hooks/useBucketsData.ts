@@ -6,9 +6,14 @@ import type { IBucket } from "@/types/bucket.ts";
 import { bucketsQueryOptions } from "@/queries/bucket.ts";
 import { api } from "@/lib/api.ts";
 import i18n from "@/lib/i18n";
+import { useSession } from "@/hooks/useAuth";
 
 export const useBucketsData = (): IBucketsData => {
-  const { data: buckets, isLoading } = useQuery(bucketsQueryOptions());
+  const session = useSession();
+  const { data: buckets, isLoading } = useQuery({
+    ...bucketsQueryOptions(),
+    enabled: !!session,
+  });
 
   const queryClient = useQueryClient();
 

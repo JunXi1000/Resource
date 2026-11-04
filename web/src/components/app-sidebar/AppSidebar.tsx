@@ -1,11 +1,12 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 
 import { useTranslation } from "react-i18next";
-import { ChevronsUpDown, FolderSync, LogOut, Plus } from "lucide-react";
-import type { FC } from "react";
+import { ChevronsUpDown, FolderSync, LogIn, LogOut, Plus, UserPlus } from "lucide-react";
+import type { FC, MouseEvent, ReactNode } from "react";
 
 import { nav } from "@/components/app-sidebar/helpers/nav";
-import { useLogout } from "@/hooks/useAuth";
+import { useLogout, useSession } from "@/hooks/useAuth";
+import { useAuthDialog } from "@/components/auth-view/AuthDialogProvider";
 import { useBucketsData } from "@/components/bucket-view/hooks/useBucketsData";
 import { BUCKET_DESCRIPTION_MAX_LENGTH } from "@/components/bucket-view/helpers/constants";
 import { FormDialog } from "@/components/dialogs/components/FormDialog";
@@ -13,6 +14,7 @@ import { useDialog } from "@/components/dialogs/hooks/useDialog";
 import { useCurrentUser } from "@/queries/user";
 import { getUserDisplayName } from "@/types/user.ts";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,11 +39,46 @@ import {
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
 
+/**
+ * The public catalog is browsable without an account; every other sidebar
+ * destination requires one. Anonymous clicks on gated items open the
+ * sign-in dialog instead of navigating (remembering the target so the
+ * dialog can continue there after login).
+ */
+function AuthNavLink({
+  to,
+  active,
+  children,
+}: {
+  to: string;
+  active: boolean;
+  children: ReactNode;
+}) {
+  const session = useSession();
+  const { openAuthDialog } = useAuthDialog();
+
+  const handleClick = (event: MouseEvent) => {
+    if (session || to === "/") return;
+    event.preventDefault();
+    openAuthDialog(to);
+  };
+
+  return (
+    <SidebarMenuSubButton asChild isActive={active}>
+      <Link to={to} onClick={handleClick}>
+        {children}
+      </Link>
+    </SidebarMenuSubButton>
+  );
+}
+
 export const AppSidebar: FC = () => {
   const location = useLocation();
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const session = useSession();
   const logout = useLogout();
+  const { openAuthDialog } = useAuthDialog();
   const { data: user } = useCurrentUser();
   const createBucketDialog = useDialog();
   const { buckets, createBucketMutation } = useBucketsData();
@@ -72,12 +109,12 @@ export const AppSidebar: FC = () => {
                 <SidebarMenuSub>
                   {item.items.map((subItem) => (
                     <SidebarMenuSubItem key={subItem.title}>
-                      <SidebarMenuSubButton
-                        asChild
-                        isActive={location.pathname == subItem.url}
+                      <AuthNavLink
+                        to={subItem.url}
+                        active={location.pathname == subItem.url}
                       >
-                        <Link to={subItem.url}>{t(subItem.title)}</Link>
-                      </SidebarMenuSubButton>
+                        {t(subItem.title)}
+                      </AuthNavLink>
                     </SidebarMenuSubItem>
                   ))}
                 </SidebarMenuSub>
@@ -98,12 +135,12 @@ export const AppSidebar: FC = () => {
                     <SidebarMenuSub>
                       {item.items.map((subItem) => (
                         <SidebarMenuSubItem key={subItem.title}>
-                          <SidebarMenuSubButton
-                            asChild
-                            isActive={location.pathname.startsWith(subItem.url)}
+                          <AuthNavLink
+                            to={subItem.url}
+                            active={location.pathname.startsWith(subItem.url)}
                           >
-                            <Link to={subItem.url}>{t(subItem.title)}</Link>
-                          </SidebarMenuSubButton>
+                            {t(subItem.title)}
+                          </AuthNavLink>
                         </SidebarMenuSubItem>
                       ))}
                     </SidebarMenuSub>
@@ -125,12 +162,12 @@ export const AppSidebar: FC = () => {
                   <SidebarMenuSub>
                     {item.items.map((subItem) => (
                       <SidebarMenuSubItem key={subItem.title}>
-                        <SidebarMenuSubButton
-                          asChild
-                          isActive={location.pathname.startsWith(subItem.url)}
+                        <AuthNavLink
+                          to={subItem.url}
+                          active={location.pathname.startsWith(subItem.url)}
                         >
-                          <Link to={subItem.url}>{t(subItem.title)}</Link>
-                        </SidebarMenuSubButton>
+                          {t(subItem.title)}
+                        </AuthNavLink>
                       </SidebarMenuSubItem>
                     ))}
                   </SidebarMenuSub>
@@ -149,7 +186,7 @@ export const AppSidebar: FC = () => {
                   {t("navigation.shared_buckets")}
                 </div>
               </SidebarMenuButton>
-              {user?.role !== "guest" && (
+              {session && user?.role !== "guest" && (
                 <SidebarMenuAction>
                   <Plus onClick={createBucketDialog.trigger} />
                   <FormDialog
@@ -219,6 +256,7 @@ export const AppSidebar: FC = () => {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
+            {session ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton
@@ -278,6 +316,20 @@ export const AppSidebar: FC = () => {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            ) : (
+              <div className="flex items-center gap-2 px-2">
+                <Button size="sm" className="flex-1" onClick={() => openAuthDialog("/dashboard")}>
+                  <LogIn className="mr-2 h-4 w-4" />
+                  {t("auth.sign_in")}
+                </Button>
+                <Button size="sm" variant="outline" className="flex-1" asChild>
+                  <Link to="/auth/register">
+                    <UserPlus className="mr-2 h-4 w-4" />
+                    {t("auth.sign_up")}
+                  </Link>
+                </Button>
+              </div>
+            )}
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>

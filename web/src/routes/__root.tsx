@@ -32,16 +32,14 @@ function RootComponent() {
 
   const isAuthRoute = location.pathname.startsWith("/auth");
   const isShareRoute = location.pathname.startsWith("/shares");
-  // Anonymous visitors get the standalone public chrome (own header, no
-  // sidebar). Signed-in users browse the catalog like any other section:
-  // inside the authenticated layout, same as dashboard/activity/etc.
-  const isPublicRoute =
-    (location.pathname === "/" && !session) ||
-    (!session && location.pathname.startsWith("/b/")) ||
-    (!session && location.pathname.startsWith("/search")) ||
+  // Every visitor — signed in or not — gets the app chrome (sidebar +
+  // content sheet). Only auth flows, share links and the pending-approval
+  // interstitial render standalone without the sidebar.
+  const isStandalone =
+    isAuthRoute ||
+    isShareRoute ||
     location.pathname.startsWith("/pending-approval");
-  const isStandalone = isShareRoute || isPublicRoute;
-  const showSidebar = session && !isAuthRoute && !isStandalone;
+  const showSidebar = !isStandalone;
 
   return (
     <div className="flex h-svh max-h-svh w-full overflow-hidden">
@@ -55,7 +53,7 @@ function RootComponent() {
           <Outlet />
         </AppSidebarInset>
       )}
-      {!isStandalone && <UploadPanel />}
+      {session && !isStandalone && <UploadPanel />}
       <Toaster />
 
       {config.environment == EnvironmentType.development && (

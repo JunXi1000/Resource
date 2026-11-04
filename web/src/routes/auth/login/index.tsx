@@ -1,15 +1,7 @@
-import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 
-import { useState } from "react";
-import { useSuspenseQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { LogIn } from "lucide-react";
-import { useForm } from "react-hook-form";
-import type { SubmitHandler } from "react-hook-form";
-import type { ILoginForm } from "@/components/auth-view/types/session";
-import { useLogin } from "@/hooks/useAuth";
-import { mfaPending } from "@/components/mfa-view/helpers/token";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -17,12 +9,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { AuthLoginForm } from "@/components/auth-view/AuthLoginForm.tsx";
 import { authProvidersQueryOptions } from "@/queries/auth_providers.ts";
-import { ProviderType } from "@/types/auth_providers.ts";
-import { AuthProvidersButtons } from "@/components/auth-providers-buttons/AuthProvidersButtons.tsx";
-import { useConfig } from "@/hooks/useConfig.ts";
 
 export const Route = createFileRoute("/auth/login/")({
   validateSearch: (search: Record<string, unknown>): { redirect?: string } => {
@@ -35,47 +23,11 @@ export const Route = createFileRoute("/auth/login/")({
   component: Login,
 });
 
+// Kept for direct URL access (bookmarks, SSO callbacks). In-app sign-in
+// happens through the global auth dialog instead of navigating here.
 function Login() {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const { redirect } = Route.useSearch();
-  const config = useConfig();
-  const providersQuery = useSuspenseQuery(authProvidersQueryOptions());
-  const providers = providersQuery.data;
-
-  const { loginLocal } = useLogin();
-  const { register, handleSubmit, watch } = useForm<ILoginForm>();
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-
-  const ssoProviders = providers.filter((p) => p.type !== ProviderType.LOCAL);
-  const hasLocal = providers.some((p) => p.type === ProviderType.LOCAL);
-  const emailValue = watch("email") || "";
-  const passwordValue = watch("password") || "";
-
-  const handleLocalLogin: SubmitHandler<ILoginForm> = async (data) => {
-    setIsLoading(true);
-    setError(null);
-
-    const result = await loginLocal(data);
-
-    if (result.mfaRequired) {
-      mfaPending.set();
-      navigate({
-        to: "/auth/mfa",
-        search: { redirect },
-      });
-    } else if (result.success) {
-      navigate({ to: redirect || "/dashboard" });
-    } else {
-      const translated = result.error
-        ? t(`errors.${result.error}`, { defaultValue: "" })
-        : "";
-      setError(translated || t("auth.login_error"));
-    }
-
-    setIsLoading(false);
-  };
 
   return (
     <div className="m-6 flex h-full items-center justify-center">
@@ -87,82 +39,8 @@ function Login() {
           <CardTitle>{t("auth.sign_in_title")}</CardTitle>
           <CardDescription>{t("auth.sign_in_subtitle")}</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-2">
-          <AuthProvidersButtons providers={ssoProviders} redirect={redirect} />
-
-          {hasLocal && (
-            <>
-              {ssoProviders.length > 0 && (
-                <div className="relative">
-                  <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t" />
-                  </div>
-                  <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-primary-foreground text-muted-foreground px-2">
-                      {t("auth.or_continue_with")}
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              <form onSubmit={handleSubmit(handleLocalLogin)}>
-                <div className="grid gap-2">
-                  <Label htmlFor="email">{t("auth.email")}</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder={t("auth.email_placeholder")}
-                    {...register("email", { required: true })}
-                    disabled={isLoading}
-                  />
-                </div>
-
-                <div className="grid gap-2 mt-4">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="password">{t("auth.password")}</Label>
-                    <Link
-                      to="/auth/reset-password"
-                      className="text-primary text-sm font-medium hover:underline"
-                    >
-                      {t("auth.forgot_password")}
-                    </Link>
-                  </div>
-                  <Input
-                    id="password"
-                    type="password"
-                    {...register("password", { required: true })}
-                    disabled={isLoading}
-                  />
-                </div>
-
-                {error && (
-                  <div className="text-sm text-destructive mt-2">{error}</div>
-                )}
-
-                <Button
-                  type="submit"
-                  className="w-full mt-4"
-                  disabled={
-                    isLoading || !emailValue.trim() || !passwordValue.trim()
-                  }
-                >
-                  {isLoading ? t("auth.signing_in") : t("auth.sign_in")}
-                </Button>
-              </form>
-            </>
-          )}
-
-          {config.registrationEnabled && (
-            <p className="text-muted-foreground mt-4 text-center text-sm">
-              {t("auth.no_account")}{" "}
-              <Link
-                to="/auth/register"
-                className="text-primary font-medium hover:underline"
-              >
-                {t("auth.sign_up")}
-              </Link>
-            </p>
-          )}
+        <CardContent>
+          <AuthLoginForm redirect={redirect} />
         </CardContent>
       </Card>
     </div>
