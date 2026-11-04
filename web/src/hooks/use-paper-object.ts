@@ -1,4 +1,4 @@
-import * as React from "react"
+import type * as React from "react"
 
 import { useInkFaces } from "@/lib/ink/paper/sheet-layers"
 import { tiltFor } from "@/lib/ink/paper/shadows"
