@@ -84,12 +84,15 @@ export const AppSidebar: FC = () => {
   const { buckets, createBucketMutation } = useBucketsData();
 
   return (
-    <Sidebar variant="inset">
+    <Sidebar variant="inset" stock="pad" seed="safebucket-pad">
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <Link to="/dashboard" className="cursor-pointer">
-              <img src="/safebucket_banner.png" alt="SafeBucket Logo" />
+            <Link
+              to="/dashboard"
+              className="font-hand text-ink mt-1 block cursor-pointer px-2 text-2xl leading-none font-bold tracking-tight"
+            >
+              SafeBucket
             </Link>
             <Separator className="mt-2" />
           </SidebarMenuItem>

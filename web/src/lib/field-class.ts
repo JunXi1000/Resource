@@ -2,8 +2,8 @@ const CONTROL_VARIANT = /^(?:placeholder|file|selection|autofill|read-only|disab
 const PADDING = /^-?p[xytblrse]?-/
 const CONTROL_UTILITY = /^(?:resize|field-sizing)(?:-|$)/
 
-function parse(token: string): [Array<string>, string] {
-  const variants: Array<string> = []
+function parse(token: string): [string[], string] {
+  const variants: string[] = []
   let depth = 0
   let start = 0
   for (let i = 0; i < token.length; i++) {
@@ -19,8 +19,8 @@ function parse(token: string): [Array<string>, string] {
 }
 
 export function splitFieldClass(className?: string): { frame: string; control: string } {
-  const frame: Array<string> = []
-  const control: Array<string> = []
+  const frame: string[] = []
+  const control: string[] = []
   for (const token of className?.split(/\s+/) ?? []) {
     if (!token) continue
     const [variants, utility] = parse(token)

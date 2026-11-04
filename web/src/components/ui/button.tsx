@@ -1,35 +1,36 @@
+"use client"
+
 import * as React from "react"
-import {  cva } from "class-variance-authority"
-import { cn } from "cn"
+import { cva, type VariantProps } from "class-variance-authority"
 import { Slot } from "radix-ui"
-import type {VariantProps} from "class-variance-authority";
+
+import { IconSizeContext, useInk, useMergedRef } from "@/lib/ink/react"
+import { buttonRecipe } from "@/lib/ink/recipes/button-ink"
+import { cn } from "@/lib/utils"
+
+const swipe = "hover:[&>svg_[data-part=swipe]]:animate-[ll-wipe_var(--ll-dur-sheet)_var(--ll-ease-out)_both]"
 
 const buttonVariants = cva(
-  "group/button inline-flex shrink-0 items-center justify-center rounded-4xl border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "relative isolate inline-flex shrink-0 items-center justify-center gap-2 font-hand font-bold whitespace-nowrap transition-[translate] duration-(--ll-dur-press) ease-out active:translate-y-(--ll-press-sink) [&[data-pressed]:not([data-pressed=false])]:translate-y-(--ll-press-sink) disabled:pointer-events-none disabled:text-pencil-text aria-disabled:pointer-events-none aria-disabled:text-pencil-text [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not(.absolute):not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/80",
-        outline:
-          "border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:bg-transparent dark:hover:bg-input/30",
-        secondary:
-          "bg-secondary text-secondary-foreground hover:bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_5%)] aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
-        ghost:
-          "hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50",
-        destructive:
-          "bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40",
-        link: "text-primary underline-offset-4 hover:underline",
+        default: "text-primary-foreground",
+        destructive: "text-paper",
+        outline: "text-ink",
+        secondary: "text-secondary-foreground",
+        ghost: `text-foreground ${swipe}`,
+        link: `text-link hover:text-link-hover ${swipe}`,
       },
       size: {
-        default:
-          "h-9 gap-1.5 px-3 has-data-[icon=inline-end]:pr-2.5 has-data-[icon=inline-start]:pl-2.5",
-        xs: "h-6 gap-1 px-2.5 text-xs has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 [&_svg:not([class*='size-'])]:size-3",
-        sm: "h-8 gap-1 px-3 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2",
-        lg: "h-10 gap-1.5 px-4 has-data-[icon=inline-end]:pr-3 has-data-[icon=inline-start]:pl-3",
-        icon: "size-9",
-        "icon-xs": "size-6 [&_svg:not([class*='size-'])]:size-3",
-        "icon-sm": "size-8",
-        "icon-lg": "size-10",
+        default: "h-9 px-4 py-2 text-base has-[>svg:not(.absolute)]:px-3 compact:h-8 calm:h-7",
+        xs: "h-6 gap-1 px-2 text-sm has-[>svg:not(.absolute)]:px-1.5 [&_svg:not(.absolute):not([class*='size-'])]:size-3",
+        sm: "h-8 gap-1.5 px-3 text-[15px] has-[>svg:not(.absolute)]:px-2.5 compact:h-7 calm:h-7",
+        lg: "h-10 px-6 text-[17px] has-[>svg:not(.absolute)]:px-4 compact:h-9 calm:h-8",
+        icon: "size-9 compact:size-8 calm:size-7",
+        "icon-xs": "size-6 [&_svg:not(.absolute):not([class*='size-'])]:size-3",
+        "icon-sm": "size-8 compact:size-7 calm:size-7",
+        "icon-lg": "size-10 compact:size-9 calm:size-8",
       },
     },
     defaultVariants: {
@@ -41,24 +42,70 @@ const buttonVariants = cva(
 
 function Button({
   className,
-  variant = "default",
-  size = "default",
+  variant,
+  size,
   asChild = false,
+  disabled,
+  seed,
+  children,
+  ref,
+  onClick,
   ...props
 }: React.ComponentProps<"button"> &
   VariantProps<typeof buttonVariants> & {
     asChild?: boolean
+    seed?: string | number
   }) {
-  const Comp = asChild ? Slot.Root : "button"
+  const v = variant ?? "default"
+  const s = size ?? "default"
+  const pill = !!className && className.split(/\s+/).includes("rounded-full")
+  const forced = "data-focus-visible" in props || "data-pressed" in props
+  const { hostRef, hostProps, node } = useInk({
+    recipe: buttonRecipe,
+    params: { variant: v, size: s, disabled: !!disabled, shape: pill ? "pill" : "default" },
+    kind: "button",
+    seed,
+    layers: forced ? "all" : undefined,
+  })
+  const mergedRef = useMergedRef<HTMLElement>(hostRef, ref as React.Ref<HTMLElement> | undefined)
+  const iconPx = s === "xs" || s === "icon-xs" ? 12 : undefined
+  const shared = {
+    "data-variant": v,
+    "data-size": s,
+    "data-shape": pill ? "pill" : undefined,
+    "data-ink-sink": "self",
+    className: cn(buttonVariants({ variant: v, size: s, className })),
+    ref: mergedRef,
+    ...hostProps,
+    ...props,
+  }
+
+  if (asChild) {
+    const inert = disabled
+      ? {
+          "aria-disabled": true as const,
+          "data-disabled": "",
+          tabIndex: -1,
+          onClick: (e: React.MouseEvent<HTMLElement>) => e.preventDefault(),
+        }
+      : { onClick: onClick as React.MouseEventHandler<HTMLElement> | undefined }
+    return (
+      <IconSizeContext value={iconPx}>
+        <Slot.Root data-slot="button" {...shared} {...inert}>
+          <Slot.Slottable>{children}</Slot.Slottable>
+          {node}
+        </Slot.Root>
+      </IconSizeContext>
+    )
+  }
 
   return (
-    <Comp
-      data-slot="button"
-      data-variant={variant}
-      data-size={size}
-      className={cn(buttonVariants({ variant, size, className }))}
-      {...props}
-    />
+    <IconSizeContext value={iconPx}>
+      <button data-slot="button" {...shared} disabled={disabled} onClick={onClick}>
+        {node}
+        {children}
+      </button>
+    </IconSizeContext>
   )
 }
 

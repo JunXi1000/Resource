@@ -12,7 +12,6 @@ import { isGen, type ArtAccent, type ArtColour, type ArtDef, type ArtKind, type 
 
 import { badgeSkeleton } from '@/lib/ink/art/badge-gen'
 import { stamp } from '@/lib/ink/art/rubber-stamp'
-
 export { badgeSkeleton }
 export type { BadgeOpts } from '@/lib/ink/art/badge-gen'
 export { stamp }

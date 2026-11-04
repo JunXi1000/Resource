@@ -1,56 +1,85 @@
 "use client"
 
 import * as React from "react"
-import { cn } from "cn"
 import { Tooltip as TooltipPrimitive } from "radix-ui"
 
-function TooltipProvider({
-  delayDuration = 0,
-  ...props
-}: React.ComponentProps<typeof TooltipPrimitive.Provider>) {
-  return (
-    <TooltipPrimitive.Provider
-      data-slot="tooltip-provider"
-      delayDuration={delayDuration}
-      {...props}
-    />
-  )
+import { Paper, type PaperProps } from "@/components/ui/paper"
+import { PropSvg } from "@/lib/ink/paper/prop-svg"
+import { useDensity, useInkScope, useInkSeed, useInkTier } from "@/lib/ink/react"
+import { pointerMark } from "@/lib/ink/recipes/overlay-ink"
+import { cn } from "@/lib/utils"
+
+function TooltipProvider({ delayDuration = 0, ...props }: React.ComponentProps<typeof TooltipPrimitive.Provider>) {
+  return <TooltipPrimitive.Provider data-slot="tooltip-provider" delayDuration={delayDuration} {...props} />
 }
 
-function Tooltip({
-  ...props
-}: React.ComponentProps<typeof TooltipPrimitive.Root>) {
+function Tooltip({ ...props }: React.ComponentProps<typeof TooltipPrimitive.Root>) {
   return <TooltipPrimitive.Root data-slot="tooltip" {...props} />
 }
 
-function TooltipTrigger({
-  ...props
-}: React.ComponentProps<typeof TooltipPrimitive.Trigger>) {
+function TooltipTrigger({ ...props }: React.ComponentProps<typeof TooltipPrimitive.Trigger>) {
   return <TooltipPrimitive.Trigger data-slot="tooltip-trigger" {...props} />
+}
+
+function TooltipPointer({ seed }: { seed: string }) {
+  const tier = useInkTier()
+  const calm = useDensity() === "calm"
+  const res = React.useMemo(() => pointerMark(`${seed}|pointer`, { tier, calm, w: 18, h: 16 }), [seed, tier, calm])
+  return (
+    <TooltipPrimitive.Arrow asChild>
+      <PropSvg
+        res={res}
+        kind="prop"
+        data-slot="tooltip-arrow"
+        width={res.w}
+        height={res.h}
+        viewBox={`0 0 ${res.w} ${res.h}`}
+        preserveAspectRatio="xMidYMid meet"
+        className="pointer-events-none"
+      />
+    </TooltipPrimitive.Arrow>
+  )
 }
 
 function TooltipContent({
   className,
-  sideOffset = 0,
+  sideOffset = 1,
+  collisionPadding = 8,
+  stock = "sticky-yellow",
+  tilt = true,
+  arrow = true,
+  seed: seedProp,
   children,
   ...props
-}: React.ComponentProps<typeof TooltipPrimitive.Content>) {
+}: React.ComponentProps<typeof TooltipPrimitive.Content> &
+  Pick<PaperProps, "stock" | "tilt" | "seed"> & {
+    arrow?: boolean
+  }) {
+  const scope = useInkScope()
+  const seed = useInkSeed(seedProp)
   return (
     <TooltipPrimitive.Portal>
-      <TooltipPrimitive.Content
-        data-slot="tooltip-content"
-        sideOffset={sideOffset}
-        className={cn(
-          "z-50 inline-flex w-fit max-w-xs origin-(--radix-tooltip-content-transform-origin) items-center gap-1.5 rounded-xl bg-foreground px-3 py-1.5 text-xs text-background has-data-[slot=kbd]:pr-1.5 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 **:data-[slot=kbd]:relative **:data-[slot=kbd]:isolate **:data-[slot=kbd]:z-50 **:data-[slot=kbd]:rounded-lg data-[state=delayed-open]:animate-in data-[state=delayed-open]:fade-in-0 data-[state=delayed-open]:zoom-in-95 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
-          className
-        )}
-        {...props}
-      >
-        {children}
-        <TooltipPrimitive.Arrow className="z-50 size-2.5 translate-y-[calc(-50%_-_2px)] rotate-45 rounded-[2px] bg-foreground fill-foreground data-[side=left]:translate-x-[-1.5px] data-[side=right]:translate-x-[1.5px]" />
+      <TooltipPrimitive.Content asChild sideOffset={sideOffset} collisionPadding={collisionPadding} {...props}>
+        <Paper
+          data-slot="tooltip-content"
+          stock={stock}
+          tilt={tilt}
+          rules="none"
+          seed={seed}
+          {...scope}
+          className={cn(
+            "z-(--ll-z-popover) w-fit max-w-[min(22rem,calc(100vw-1rem))] origin-(--radix-tooltip-content-transform-origin) px-2.5 py-1.5 text-sm/snug break-words text-balance text-foreground",
+            "duration-(--ll-dur-pop) animate-in fade-in-0 zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
+            "data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95",
+            className
+          )}
+        >
+          {children}
+          {arrow && <TooltipPointer seed={seed} />}
+        </Paper>
       </TooltipPrimitive.Content>
     </TooltipPrimitive.Portal>
   )
 }
 
-export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger }
+export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider }

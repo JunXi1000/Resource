@@ -1,3 +1,5 @@
+"use client"
+
 import * as React from "react"
 
 import { isCutEdge, edgeInset, edgeName, type EdgeSpec } from "@/lib/ink/paper/edges"
