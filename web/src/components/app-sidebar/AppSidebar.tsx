@@ -2,11 +2,10 @@ import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 
 import { useTranslation } from "react-i18next";
 import { ChevronsUpDown, FolderSync, LogIn, LogOut, Plus, UserPlus } from "lucide-react";
-import type { FC, MouseEvent, ReactNode } from "react";
+import type { FC, ReactNode } from "react";
 
 import { nav } from "@/components/app-sidebar/helpers/nav";
 import { useLogout, useSession } from "@/hooks/useAuth";
-import { useAuthDialog } from "@/components/auth-view/AuthDialogProvider";
 import { useBucketsData } from "@/components/bucket-view/hooks/useBucketsData";
 import { BUCKET_DESCRIPTION_MAX_LENGTH } from "@/components/bucket-view/helpers/constants";
 import { FormDialog } from "@/components/dialogs/components/FormDialog";
@@ -40,10 +39,8 @@ import {
 } from "@/components/ui/sidebar";
 
 /**
- * The public catalog is browsable without an account; every other sidebar
- * destination requires one. Anonymous clicks on gated items open the
- * sign-in dialog instead of navigating (remembering the target so the
- * dialog can continue there after login).
+ * Sidebar nav links; gated destinations are protected by the route guards,
+ * which redirect anonymous visitors to the sign-in page.
  */
 function AuthNavLink({
   to,
@@ -54,20 +51,9 @@ function AuthNavLink({
   active: boolean;
   children: ReactNode;
 }) {
-  const session = useSession();
-  const { openAuthDialog } = useAuthDialog();
-
-  const handleClick = (event: MouseEvent) => {
-    if (session || to === "/") return;
-    event.preventDefault();
-    openAuthDialog(to);
-  };
-
   return (
     <SidebarMenuSubButton asChild isActive={active}>
-      <Link to={to} onClick={handleClick}>
-        {children}
-      </Link>
+      <Link to={to}>{children}</Link>
     </SidebarMenuSubButton>
   );
 }
@@ -78,7 +64,6 @@ export const AppSidebar: FC = () => {
   const navigate = useNavigate();
   const session = useSession();
   const logout = useLogout();
-  const { openAuthDialog } = useAuthDialog();
   const { data: user } = useCurrentUser();
   const createBucketDialog = useDialog();
   const { buckets, createBucketMutation } = useBucketsData();
@@ -321,9 +306,11 @@ export const AppSidebar: FC = () => {
             </DropdownMenu>
             ) : (
               <div className="flex items-center gap-2 px-2">
-                <Button size="sm" className="flex-1" onClick={() => openAuthDialog("/dashboard")}>
-                  <LogIn className="mr-2 h-4 w-4" />
-                  {t("auth.sign_in")}
+                <Button size="sm" className="flex-1" asChild>
+                  <Link to="/auth/login" search={{ redirect: "/dashboard" }}>
+                    <LogIn className="mr-2 h-4 w-4" />
+                    {t("auth.sign_in")}
+                  </Link>
                 </Button>
                 <Button size="sm" variant="outline" className="flex-1" asChild>
                   <Link to="/auth/register">
