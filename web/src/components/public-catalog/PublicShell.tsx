@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { Globe, LayoutDashboard, LogIn, Search, UserPlus } from "lucide-react";
+import { Globe, LogIn, Search, UserPlus } from "lucide-react";
 import type { FC, ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { useConfig } from "@/hooks/useConfig";
@@ -15,6 +15,13 @@ export const PublicShell: FC<{ children: ReactNode }> = ({ children }) => {
   const { t } = useTranslation();
   const config = useConfig();
   const session = useSession();
+
+  // Signed-in users browse every public page inside the authenticated layout
+  // (sidebar + content sheet), the same as dashboard/activity/etc. The full
+  // standalone chrome (header, footer) is for anonymous visitors only.
+  if (session) {
+    return <div className="px-6 py-6">{children}</div>;
+  }
 
   return (
     <div className="flex min-h-svh flex-col bg-background">
@@ -44,31 +51,20 @@ export const PublicShell: FC<{ children: ReactNode }> = ({ children }) => {
           </nav>
 
           <div className="ml-auto flex items-center gap-2">
-            {session ? (
-              <Button size="sm" asChild>
-                <Link to="/dashboard">
-                  <LayoutDashboard className="mr-2 h-4 w-4" />
-                  {t("public_catalog.header.console")}
+            {config.registrationEnabled && (
+              <Button variant="ghost" size="sm" asChild>
+                <Link to="/auth/register">
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  {t("public_catalog.header.register")}
                 </Link>
               </Button>
-            ) : (
-              <>
-                {config.registrationEnabled && (
-                  <Button variant="ghost" size="sm" asChild>
-                    <Link to="/auth/register">
-                      <UserPlus className="mr-2 h-4 w-4" />
-                      {t("public_catalog.header.register")}
-                    </Link>
-                  </Button>
-                )}
-                <Button size="sm" asChild>
-                  <Link to="/auth/login">
-                    <LogIn className="mr-2 h-4 w-4" />
-                    {t("public_catalog.header.login")}
-                  </Link>
-                </Button>
-              </>
             )}
+            <Button size="sm" asChild>
+              <Link to="/auth/login">
+                <LogIn className="mr-2 h-4 w-4" />
+                {t("public_catalog.header.login")}
+              </Link>
+            </Button>
           </div>
         </div>
       </header>

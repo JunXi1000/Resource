@@ -34,68 +34,58 @@ function PublicHome() {
   };
 
   if (!config.publicCatalogEnabled) {
-    const disabledNotice = (
-      <div className="rounded-lg border border-dashed p-16 text-center">
-        <p className="text-lg font-semibold">
-          {t("public_catalog.disabled.title")}
-        </p>
-        <p className="text-muted-foreground mt-2 text-sm">
-          {t("public_catalog.disabled.description")}
-        </p>
-        {!session && (
-          <Button className="mt-6" asChild>
-            <a href="/auth/login">{t("public_catalog.header.login")}</a>
-          </Button>
-        )}
-      </div>
-    );
-
-    return session ? (
-      <div className="py-6">{disabledNotice}</div>
-    ) : (
-      <PublicShell>{disabledNotice}</PublicShell>
-    );
-  }
-
-  // Signed-in visitors see the catalog exactly like every other section:
-  // inside the authenticated layout, no separate page chrome.
-  if (session) {
     return (
-      <div className="px-6 py-6">
-        <CatalogBrowse category={category} />
-      </div>
+      <PublicShell>
+        <div className="rounded-lg border border-dashed p-16 text-center">
+          <p className="text-lg font-semibold">
+            {t("public_catalog.disabled.title")}
+          </p>
+          <p className="text-muted-foreground mt-2 text-sm">
+            {t("public_catalog.disabled.description")}
+          </p>
+          {!session && (
+            <Button className="mt-6" asChild>
+              <a href="/auth/login">{t("public_catalog.header.login")}</a>
+            </Button>
+          )}
+        </div>
+      </PublicShell>
     );
   }
 
+  // PublicShell renders standalone chrome for anonymous visitors and a light
+  // inline wrapper for signed-in users (who get the sidebar layout).
   return (
     <PublicShell>
-      <section className="mx-auto max-w-3xl py-10 text-center sm:py-16">
-        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-          {t("public_catalog.hero.title")}
-        </h1>
-        <p className="text-muted-foreground mt-3 text-base sm:text-lg">
-          {t("public_catalog.hero.subtitle")}
-        </p>
+      {!session && (
+        <section className="mx-auto max-w-3xl py-10 text-center sm:py-16">
+          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+            {t("public_catalog.hero.title")}
+          </h1>
+          <p className="text-muted-foreground mt-3 text-base sm:text-lg">
+            {t("public_catalog.hero.subtitle")}
+          </p>
 
-        <form
-          onSubmit={submitSearch}
-          className="mx-auto mt-6 flex w-full max-w-xl items-center gap-2"
-        >
-          <div className="relative flex-1">
-            <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-            <Input
-              value={term}
-              onChange={(event) => setTerm(event.target.value)}
-              placeholder={t("public_catalog.hero.search_placeholder")}
-              className="h-11 pl-9"
-            />
-          </div>
-          <Button type="submit" className="h-11">
-            {t("public_catalog.hero.search")}
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
-        </form>
-      </section>
+          <form
+            onSubmit={submitSearch}
+            className="mx-auto mt-6 flex w-full max-w-xl items-center gap-2"
+          >
+            <div className="relative flex-1">
+              <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+              <Input
+                value={term}
+                onChange={(event) => setTerm(event.target.value)}
+                placeholder={t("public_catalog.hero.search_placeholder")}
+                className="h-11 pl-9"
+              />
+            </div>
+            <Button type="submit" className="h-11">
+              {t("public_catalog.hero.search")}
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </form>
+        </section>
+      )}
 
       <section>
         <CatalogBrowse category={category} />

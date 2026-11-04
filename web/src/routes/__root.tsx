@@ -37,8 +37,8 @@ function RootComponent() {
   // inside the authenticated layout, same as dashboard/activity/etc.
   const isPublicRoute =
     (location.pathname === "/" && !session) ||
-    location.pathname.startsWith("/b/") ||
-    location.pathname.startsWith("/search") ||
+    (!session && location.pathname.startsWith("/b/")) ||
+    (!session && location.pathname.startsWith("/search")) ||
     location.pathname.startsWith("/pending-approval");
   const isStandalone = isShareRoute || isPublicRoute;
   const showSidebar = session && !isAuthRoute && !isStandalone;
