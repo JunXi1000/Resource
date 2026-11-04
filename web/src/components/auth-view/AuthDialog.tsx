@@ -119,7 +119,9 @@ export const AuthDialog: FC<{ children: ReactNode }> = ({ children }) => {
     <AuthDialogContext.Provider value={contextValue}>
       {children}
       <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-        <DialogContent className="sm:max-w-md">
+        {/* Stable seed: the sheet ink (torn edge + close mark) is generated
+            once and served from the ink cache on every later open/mode switch. */}
+        <DialogContent className="sm:max-w-md" seed="auth-dialog">
           <DialogHeader>
             <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-info/10">
               {mode === "login" ? (

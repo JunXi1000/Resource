@@ -111,14 +111,31 @@ export function useInkBox(o: { size?: readonly [number, number] } = {}): { ref: 
   const [box, setBox] = React.useState<Box | null>(() => (o.size ? bucketBox(o.size[0], o.size[1]) : null))
   const ref = React.useCallback((el: Element | null) => {
     if (!el) return
-    const update = () => {
+    const measure = () => {
       const [w, h] = readSize(el)
       if (!(w > 0 && h > 0)) return
       const b = bucketBox(w, h)
       setBox((prev) => (prev && prev.w === b.w && prev.h === b.h ? prev : b))
     }
-    update()
-    return observe(el, update)
+    // Layout animations (sidebar collapse, window resize) fire the observer
+    // every frame; regenerating ink SVGs mid-animation forces sync layout
+    // reads, cache misses and DOM swaps on each 4px bucket — pure jank. The
+    // SVG stretches with the host (preserveAspectRatio=none), so coalesce
+    // trailing updates and redraw once the resize settles.
+    let timer: number | undefined
+    const update = () => {
+      if (timer !== undefined) window.clearTimeout(timer)
+      timer = window.setTimeout(() => {
+        timer = undefined
+        measure()
+      }, 150)
+    }
+    measure()
+    const stop = observe(el, update)
+    return () => {
+      if (timer !== undefined) window.clearTimeout(timer)
+      stop()
+    }
   }, [])
   return { ref, box }
 }
