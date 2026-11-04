@@ -4,11 +4,11 @@ import { useTranslation } from "react-i18next";
 import { ArrowRight, Search } from "lucide-react";
 import type { FormEvent } from "react";
 import { PublicShell } from "@/components/public-catalog/PublicShell";
-import { BucketGrid } from "@/components/public-catalog/BucketGrid";
-import { CategoryChips } from "@/components/public-catalog/CategoryChips";
+import { CatalogBrowse } from "@/components/public-catalog/CatalogBrowse";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useConfig } from "@/hooks/useConfig";
+import { useSession } from "@/hooks/useAuth";
 
 export const Route = createFileRoute("/")({
   validateSearch: (search: Record<string, unknown>): { category?: string } => ({
@@ -21,6 +21,7 @@ function PublicHome() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const config = useConfig();
+  const session = useSession();
   const { category } = Route.useSearch();
   const [term, setTerm] = useState("");
 
@@ -33,20 +34,36 @@ function PublicHome() {
   };
 
   if (!config.publicCatalogEnabled) {
-    return (
-      <PublicShell>
-        <div className="rounded-lg border border-dashed p-16 text-center">
-          <p className="text-lg font-semibold">
-            {t("public_catalog.disabled.title")}
-          </p>
-          <p className="text-muted-foreground mt-2 text-sm">
-            {t("public_catalog.disabled.description")}
-          </p>
+    const disabledNotice = (
+      <div className="rounded-lg border border-dashed p-16 text-center">
+        <p className="text-lg font-semibold">
+          {t("public_catalog.disabled.title")}
+        </p>
+        <p className="text-muted-foreground mt-2 text-sm">
+          {t("public_catalog.disabled.description")}
+        </p>
+        {!session && (
           <Button className="mt-6" asChild>
             <a href="/auth/login">{t("public_catalog.header.login")}</a>
           </Button>
-        </div>
-      </PublicShell>
+        )}
+      </div>
+    );
+
+    return session ? (
+      <div className="py-6">{disabledNotice}</div>
+    ) : (
+      <PublicShell>{disabledNotice}</PublicShell>
+    );
+  }
+
+  // Signed-in visitors see the catalog exactly like every other section:
+  // inside the authenticated layout, no separate page chrome.
+  if (session) {
+    return (
+      <div className="px-6 py-6">
+        <CatalogBrowse category={category} />
+      </div>
     );
   }
 
@@ -80,23 +97,8 @@ function PublicHome() {
         </form>
       </section>
 
-      <section className="space-y-6">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className="text-xl font-semibold">
-            {t("public_catalog.sections.title")}
-          </h2>
-          <CategoryChips
-            active={category}
-            onSelect={(next) =>
-              navigate({
-                to: "/",
-                search: (prev) => ({ ...prev, category: next }),
-              })
-            }
-          />
-        </div>
-
-        <BucketGrid filters={{ category }} />
+      <section>
+        <CatalogBrowse category={category} />
       </section>
     </PublicShell>
   );

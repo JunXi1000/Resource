@@ -32,11 +32,11 @@ function RootComponent() {
 
   const isAuthRoute = location.pathname.startsWith("/auth");
   const isShareRoute = location.pathname.startsWith("/shares");
-  // The public catalog renders its own header and must never be wrapped in the
-  // authenticated chrome, even for a signed-in visitor: two competing nav bars
-  // on the same page is worse than no sidebar at all.
+  // Anonymous visitors get the standalone public chrome (own header, no
+  // sidebar). Signed-in users browse the catalog like any other section:
+  // inside the authenticated layout, same as dashboard/activity/etc.
   const isPublicRoute =
-    location.pathname === "/" ||
+    (location.pathname === "/" && !session) ||
     location.pathname.startsWith("/b/") ||
     location.pathname.startsWith("/search") ||
     location.pathname.startsWith("/pending-approval");
