@@ -289,7 +289,9 @@
       "title": "统计",
       "total_files": "文件总数",
       "total_buckets": "存储桶总数"
-    }
+    },
+    "welcome_guest": "欢迎回来！",
+    "welcome_named": "欢迎回来，{{firstName}}！"
   },
   "file_actions": {
     "preview": "预览",

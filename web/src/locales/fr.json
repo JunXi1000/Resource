@@ -274,7 +274,9 @@
       "title": "Statistiques",
       "total_files": "Nombre total de fichiers",
       "total_buckets": "Nombre total de buckets"
-    }
+    },
+    "welcome_guest": "Bienvenue !",
+    "welcome_named": "Bienvenue {{firstName}} !"
   },
   "file_actions": {
     "preview": "Aperçu",

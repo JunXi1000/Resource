@@ -11,6 +11,7 @@ import {
   ActivityDateRangePicker,
   dateRangeToQuery,
 } from "@/components/activity-view/components/ActivityDateRangePicker";
+import { useSession } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -20,6 +21,7 @@ export const Route = createFileRoute("/_authenticated/activity/")({
 
 function ActivityPage() {
   const { t } = useTranslation();
+  const session = useSession();
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
 
   const {
@@ -30,6 +32,7 @@ function ActivityPage() {
     isFetchingNextPage,
   } = useInfiniteQuery({
     ...bucketsActivityInfiniteQueryOptions(dateRangeToQuery(dateRange)),
+    enabled: !!session,
     select: (data) => data.pages.flatMap((page) => page.data),
   });
 

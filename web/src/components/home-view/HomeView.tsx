@@ -14,12 +14,15 @@ import { Skeleton } from "@/components/ui/skeleton.tsx";
 import { bucketsActivityInfiniteQueryOptions } from "@/queries/bucket.ts";
 import { ActivityItem } from "@/components/activity-view/components/ActivityItem.tsx";
 import { ActivityViewSkeleton } from "@/components/activity-view/components/ActivityViewSkeleton.tsx";
+import { useSession } from "@/hooks/useAuth";
 import { useCurrentUser, useUserStatsQuery } from "@/queries/user";
 
 export const HomeView: FC = () => {
+  const session = useSession();
   const { data: activity = [], isLoading: isActivityLoading } =
     useInfiniteQuery({
       ...bucketsActivityInfiniteQueryOptions(),
+      enabled: !!session,
       select: (data) => data.pages[0]?.data ?? [],
     });
 
@@ -36,6 +39,7 @@ export const HomeView: FC = () => {
           <div className="text-center">
             <h1 className="text-3xl font-bold text-foreground">
               {t("homepage.welcome", {
+                context: user ? "named" : "guest",
                 firstName: user?.first_name,
               })}
             </h1>

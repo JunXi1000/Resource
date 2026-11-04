@@ -7,6 +7,7 @@ import { NotificationPopover } from "@/components/bucket-view/components/Notific
 import { PageHeader } from "@/components/bucket-view/components/PageHeader";
 import { TabLink } from "@/components/bucket-view/components/TabLink";
 import { Button } from "@/components/ui/button";
+import { requireAuth } from "@/lib/route-guards";
 import { useBucketPermissions } from "@/hooks/usePermissions";
 import { DragDropZone } from "@/components/upload/components/DragDropZone";
 import { UploadDialog } from "@/components/upload/components/UploadDialog";
@@ -14,6 +15,8 @@ import { useUploadDialog } from "@/components/upload/hooks/useUploadDialog";
 import { bucketDataQueryOptions } from "@/queries/bucket.ts";
 
 export const Route = createFileRoute("/_authenticated/buckets/$bucketId")({
+  // Guests own no buckets: hard gate (they never see links into here).
+  beforeLoad: requireAuth,
   loader: ({ context: { queryClient }, params: { bucketId } }) =>
     queryClient.ensureQueryData(bucketDataQueryOptions(bucketId)),
   component: BucketLayout,
