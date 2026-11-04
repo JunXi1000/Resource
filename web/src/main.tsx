@@ -16,6 +16,7 @@ import { TimeDisplayProvider } from "@/components/time-display/context/TimeDispl
 import { SidebarProvider } from "@/components/ui/sidebar.tsx";
 import { TooltipProvider } from "@/components/ui/tooltip.tsx";
 import { UploadProvider } from "@/components/upload/context/UploadProvider.tsx";
+import { InkProvider } from "@/lib/ink/react";
 
 import "@fontsource-variable/inter";
 import "./lib/i18n";
@@ -81,17 +82,19 @@ async function initializeApp() {
     root.render(
       <StrictMode>
         <QueryClientProvider client={queryClient}>
-          <ThemeProvider>
-            <TimeDisplayProvider>
-              <SidebarProvider>
-                <TooltipProvider>
-                  <UploadProvider>
-                    <RouterProvider router={router} />
-                  </UploadProvider>
-                </TooltipProvider>
-              </SidebarProvider>
-            </TimeDisplayProvider>
-          </ThemeProvider>
+          <InkProvider>
+            <ThemeProvider>
+              <TimeDisplayProvider>
+                <SidebarProvider>
+                  <TooltipProvider>
+                    <UploadProvider>
+                      <RouterProvider router={router} />
+                    </UploadProvider>
+                  </TooltipProvider>
+                </SidebarProvider>
+              </TimeDisplayProvider>
+            </ThemeProvider>
+          </InkProvider>
         </QueryClientProvider>
       </StrictMode>,
     );

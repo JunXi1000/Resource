@@ -1,7 +1,7 @@
 import { Ellipsis, Eye, Trash2 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
-import type { FC } from "react";
 import { useTranslation } from "react-i18next";
+import type { FC } from "react";
 import type { IAdminBucket } from "@/types/admin.ts";
 import { Button } from "@/components/ui/button";
 import {

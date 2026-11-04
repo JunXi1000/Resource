@@ -1,6 +1,6 @@
 import { Ellipsis, Trash2 } from "lucide-react";
-import type { FC } from "react";
 import { useTranslation } from "react-i18next";
+import type { FC } from "react";
 import type { IAdminUser } from "@/components/auth-view/types/session";
 import { Button } from "@/components/ui/button";
 import {
