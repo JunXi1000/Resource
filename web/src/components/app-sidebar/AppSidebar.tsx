@@ -13,7 +13,6 @@ import { useDialog } from "@/components/dialogs/hooks/useDialog";
 import { useCurrentUser } from "@/queries/user";
 import { getUserDisplayName } from "@/types/user.ts";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Paper } from "@/components/ui/paper";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -52,23 +51,10 @@ export const AppSidebar: FC = () => {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <Paper
-              stock="slip"
-              tape={false}
-              fastener="binder-clip"
-              tilt={-1.2}
-              shadow="slip"
-              seed="sidebar-slip"
-              className="px-4 py-3"
-            >
-              <span className="font-script text-xl leading-none">
-                SafeBucket
-              </span>
-              <p className="text-muted-foreground mt-1 text-xs">
-                {t("navigation.personal")}
-              </p>
-            </Paper>
-            <Separator className="mt-3" />
+            <Link to="/dashboard" className="cursor-pointer">
+              <img src="/safebucket_banner.png" alt="SafeBucket Logo" />
+            </Link>
+            <Separator className="mt-2" />
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
