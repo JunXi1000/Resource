@@ -6,7 +6,7 @@ import type { FC, ReactNode } from "react";
 
 import { nav } from "@/components/app-sidebar/helpers/nav";
 import { useLogout, useSession } from "@/hooks/useAuth";
-import { openAuthDialog } from "@/components/auth-view/AuthDialog";
+import { openAuthDialog, openRegisterDialog } from "@/components/auth-view/auth-dialog-bus";
 import { useBucketsData } from "@/components/bucket-view/hooks/useBucketsData";
 import { BUCKET_DESCRIPTION_MAX_LENGTH } from "@/components/bucket-view/helpers/constants";
 import { FormDialog } from "@/components/dialogs/components/FormDialog";
@@ -317,17 +317,18 @@ export const AppSidebar: FC = () => {
             </DropdownMenu>
             ) : (
               <div className="flex items-center gap-2 px-2">
-                <Button size="sm" className="flex-1" asChild>
-                  <Link to="/auth/login" search={{ redirect: "/dashboard" }}>
-                    <LogIn className="mr-2 h-4 w-4" />
-                    {t("auth.sign_in")}
-                  </Link>
+                <Button size="sm" className="flex-1" onClick={() => openAuthDialog("/dashboard")}>
+                  <LogIn className="mr-2 h-4 w-4" />
+                  {t("auth.sign_in")}
                 </Button>
-                <Button size="sm" variant="outline" className="flex-1" asChild>
-                  <Link to="/auth/register">
-                    <UserPlus className="mr-2 h-4 w-4" />
-                    {t("auth.sign_up")}
-                  </Link>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => openRegisterDialog()}
+                >
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  {t("auth.sign_up")}
                 </Button>
               </div>
             )}

@@ -1,5 +1,6 @@
 import { getApiUrl } from "@/hooks/useConfig.ts";
 import { refreshAccessToken } from "@/lib/auth-service";
+import { openAuthDialog } from "@/components/auth-view/auth-dialog-bus";
 
 export type RequestParams = Record<
   string,
@@ -86,7 +87,9 @@ export async function fetchApi<T>(
     }
 
     if (response.status === 401 && errorCode === "SESSION_REVOKED") {
-      window.location.href = "/auth/login";
+      // Sign the user out in place and pop the dialog — never a hard
+      // page jump (that breaks browser history and the flow in progress).
+      openAuthDialog(window.location.pathname + window.location.search);
       throw new Error(errorCode);
     }
 
@@ -102,10 +105,10 @@ export async function fetchApi<T>(
         const refreshed = await refreshAccessToken();
         if (refreshed) {
           return fetchApi<T>(url, options, false);
-        } else {
-          await api.post("/auth/logout");
-          window.location.href = "/auth/login";
         }
+        // Session expired and cannot be refreshed: pop the sign-in dialog
+        // over the current page instead of navigating to the login page.
+        openAuthDialog(window.location.pathname + window.location.search);
       }
     }
 

@@ -3,6 +3,7 @@ import type { QueryClient } from "@tanstack/react-query";
 
 import type { Session } from "@/components/auth-view/types/session";
 import { meQueryOptions } from "@/queries/me";
+import { openAuthDialog } from "@/components/auth-view/auth-dialog-bus";
 
 async function resolveSession(
   queryClient: QueryClient,
@@ -12,7 +13,9 @@ async function resolveSession(
 
 /**
  * Hard gate for routes an anonymous visitor has no business reaching
- * (bucket detail — guests own no buckets — and anything admin).
+ * (bucket detail — guests own no buckets — and anything admin). Pops the
+ * sign-in dialog remembering the target, then bounces back to the root
+ * with replace so browser history stays clean.
  */
 export async function requireAuth({
   location,
@@ -24,19 +27,18 @@ export async function requireAuth({
   const session = await resolveSession(context.queryClient);
 
   if (!session) {
+    openAuthDialog(location.href);
     throw redirect({
-      to: "/auth/login",
-      search: {
-        redirect: location.href,
-      },
+      to: "/",
+      search: {},
+      replace: true,
     });
   }
 }
 
 /**
- * Admin pages stay hard-gated: anonymous visitors are sent to the
- * standalone sign-in page. Regular pages gate through the auth dialog
- * flow instead.
+ * Admin pages: anonymous visitors get the sign-in dialog (same flow),
+ * signed-in non-admins are sent to their dashboard.
  */
 export async function requireAdmin({
   location,
@@ -48,11 +50,11 @@ export async function requireAdmin({
   const session = await resolveSession(context.queryClient);
 
   if (!session) {
+    openAuthDialog(location.href);
     throw redirect({
-      to: "/auth/login",
-      search: {
-        redirect: location.href,
-      },
+      to: "/",
+      search: {},
+      replace: true,
     });
   }
 

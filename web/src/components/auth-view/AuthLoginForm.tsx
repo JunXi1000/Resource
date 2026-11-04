@@ -24,6 +24,8 @@ interface IAuthLoginFormProps {
    * used by the auth dialog to close itself and refresh in place.
    */
   onSuccess?: () => void;
+  /** Shown when rendered inside the dialog (switch to registration). */
+  onSwitchToRegister?: () => void;
 }
 
 /**
@@ -32,7 +34,11 @@ interface IAuthLoginFormProps {
  *
  * MUST be rendered inside the router tree (uses useNavigate/Link).
  */
-export function AuthLoginForm({ redirect, onSuccess }: IAuthLoginFormProps) {
+export function AuthLoginForm({
+  redirect,
+  onSuccess,
+  onSwitchToRegister,
+}: IAuthLoginFormProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const config = useConfig();
@@ -145,12 +151,22 @@ export function AuthLoginForm({ redirect, onSuccess }: IAuthLoginFormProps) {
       {config.registrationEnabled && (
         <p className="text-muted-foreground mt-4 text-center text-sm">
           {t("auth.no_account")}{" "}
-          <Link
-            to="/auth/register"
-            className="text-primary font-medium hover:underline"
-          >
-            {t("auth.sign_up")}
-          </Link>
+          {onSwitchToRegister ? (
+            <button
+              type="button"
+              onClick={onSwitchToRegister}
+              className="text-primary font-medium hover:underline"
+            >
+              {t("auth.sign_up")}
+            </button>
+          ) : (
+            <Link
+              to="/auth/register"
+              className="text-primary font-medium hover:underline"
+            >
+              {t("auth.sign_up")}
+            </Link>
+          )}
         </p>
       )}
     </div>

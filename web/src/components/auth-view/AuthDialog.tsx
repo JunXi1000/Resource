@@ -11,40 +11,45 @@ import {
 } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { LogIn } from "lucide-react";
+import { LogIn, UserPlus } from "lucide-react";
 import type { FC, ReactNode } from "react";
+import type { IAuthDialogRequest } from "@/components/auth-view/auth-dialog-bus";
 import { meQueryOptions } from "@/queries/me";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AuthLoginForm } from "@/components/auth-view/AuthLoginForm";
+import { AuthRegisterForm } from "@/components/auth-view/AuthRegisterForm";
+import {
+  clearPendingAction,
+  consumePendingAction,
+  registerAuthDialogOpener,
+  requestAuthDialog,
+} from "@/components/auth-view/auth-dialog-bus";
 
 /**
- * Sign-in dialog for in-page actions (downloads, uploads, creating buckets,
- * gated pages). MUST be mounted inside the router tree — the login form
- * uses router hooks, and a null router crashes React (the blank-page bug).
+ * Sign-in / sign-up dialog for in-page actions (downloads, uploads,
+ * creating buckets, gated pages). MUST be mounted inside the router tree —
+ * the forms use router hooks, and a null router crashes React (the
+ * blank-page bug).
  *
- * The module-level bridge lets non-hook callers (event handlers deep in a
- * component tree, route guards) open the dialog without prop drilling.
+ * Everything else talks to the dialog through auth-dialog-bus so low-level
+ * modules (api.ts, route guards) can open it without React context. These
+ * re-exports keep the familiar call sites working.
  */
-type PendingAction = () => void;
-type OpenAuthDialog = (redirectTo?: string, onAuthed?: PendingAction) => void;
-let busOpenFn: OpenAuthDialog | null = null;
-let pendingAction: PendingAction | null = null;
+export const openAuthDialog = (redirectTo?: string, onAuthed?: () => void) =>
+  requestAuthDialog({ redirectTo, onAuthed, mode: "login" });
 
-export function openAuthDialog(
-  redirectTo?: string,
-  onAuthed?: PendingAction,
-): void {
-  pendingAction = onAuthed ?? null;
-  busOpenFn?.(redirectTo);
-}
+export const openRegisterDialog = (redirectTo?: string) =>
+  requestAuthDialog({ redirectTo, mode: "register" });
 
 interface IAuthDialogContext {
-  openAuthDialog: OpenAuthDialog;
+  openAuthDialog: typeof openAuthDialog;
+  openRegisterDialog: typeof openRegisterDialog;
 }
 
 const AuthDialogContext = createContext<IAuthDialogContext>({
   openAuthDialog: () => {},
+  openRegisterDialog: () => {},
 });
 
 export function useAuthDialog(): IAuthDialogContext {
@@ -56,15 +61,23 @@ export const AuthDialog: FC<{ children: ReactNode }> = ({ children }) => {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState(false);
+  const [mode, setMode] = useState<"login" | "register">("login");
   const redirectToRef = useRef<string | undefined>(undefined);
 
-  const openDialog = useCallback((redirectTo?: string) => {
-    redirectToRef.current = redirectTo;
+  const openDialog = useCallback((request: IAuthDialogRequest) => {
+    redirectToRef.current = request.redirectTo;
+    setMode(request.mode ?? "login");
     setIsOpen(true);
   }, []);
 
-  // Register the bridge for non-hook callers.
-  busOpenFn = openDialog;
+  // Register the bridge for non-React callers.
+  registerAuthDialogOpener(openDialog);
+
+  const handleOpenChange = useCallback((open: boolean) => {
+    setIsOpen(open);
+    // Dismissing the dialog must not leave a stale action behind.
+    if (!open) clearPendingAction();
+  }, []);
 
   const handleSuccess = useCallback(() => {
     setIsOpen(false);
@@ -82,19 +95,25 @@ export const AuthDialog: FC<{ children: ReactNode }> = ({ children }) => {
       }
 
       // Resume the action that triggered the dialog (e.g. the download).
-      const action = pendingAction;
-      pendingAction = null;
-      action?.();
+      consumePendingAction()?.();
     })();
   }, [queryClient, router]);
 
-  const handleOpenChange = useCallback((open: boolean) => {
-    setIsOpen(open);
-    // Dismissing the dialog must not leave a stale action behind.
-    if (!open) pendingAction = null;
-  }, []);
+  const handleRegistered = useCallback(
+    (email: string) => {
+      setIsOpen(false);
+      void router.navigate({
+        to: "/auth/register/verify",
+        search: { email },
+      });
+    },
+    [router],
+  );
 
-  const contextValue = useMemo(() => ({ openAuthDialog: openDialog }), [openDialog]);
+  const contextValue = useMemo(
+    () => ({ openAuthDialog, openRegisterDialog }),
+    [],
+  );
 
   return (
     <AuthDialogContext.Provider value={contextValue}>
@@ -103,13 +122,21 @@ export const AuthDialog: FC<{ children: ReactNode }> = ({ children }) => {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-info/10">
-              <LogIn className="h-6 w-6 text-info" />
+              {mode === "login" ? (
+                <LogIn className="h-6 w-6 text-info" />
+              ) : (
+                <UserPlus className="h-6 w-6 text-info" />
+              )}
             </div>
             <DialogTitle className="text-center">
-              {t("auth.sign_in_title")}
+              {mode === "login"
+                ? t("auth.sign_in_title")
+                : t("register.title")}
             </DialogTitle>
             <DialogDescription className="text-center">
-              {t("auth.sign_in_subtitle")}
+              {mode === "login"
+                ? t("auth.sign_in_subtitle")
+                : t("register.subtitle")}
             </DialogDescription>
           </DialogHeader>
           <Suspense
@@ -121,10 +148,18 @@ export const AuthDialog: FC<{ children: ReactNode }> = ({ children }) => {
               </div>
             }
           >
-            <AuthLoginForm
-              redirect={redirectToRef.current}
-              onSuccess={handleSuccess}
-            />
+            {mode === "login" ? (
+              <AuthLoginForm
+                redirect={redirectToRef.current}
+                onSuccess={handleSuccess}
+                onSwitchToRegister={() => setMode("register")}
+              />
+            ) : (
+              <AuthRegisterForm
+                onSuccess={handleRegistered}
+                onSwitchToLogin={() => setMode("login")}
+              />
+            )}
           </Suspense>
         </DialogContent>
       </Dialog>

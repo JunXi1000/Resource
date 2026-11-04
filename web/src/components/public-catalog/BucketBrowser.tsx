@@ -21,7 +21,7 @@ import {
   publicFilesInfiniteQueryOptions,
 } from "@/queries/public-catalog";
 import { useSession } from "@/hooks/useAuth";
-import { openAuthDialog } from "@/components/auth-view/AuthDialog";
+import { openAuthDialog } from "@/components/auth-view/auth-dialog-bus";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

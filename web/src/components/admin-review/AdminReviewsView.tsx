@@ -11,6 +11,7 @@ import {
 } from "@/queries/reviews";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useSession } from "@/hooks/useAuth";
 import {
   Card,
   CardContent,
@@ -34,12 +35,16 @@ const STATUSES: Array<ReviewStatus> = ["pending", "approved", "rejected"];
 
 export const AdminReviewsView: FC = () => {
   const { t } = useTranslation();
+  const session = useSession();
   const [status, setStatus] = useState<ReviewStatus>("pending");
   const [rejectTarget, setRejectTarget] = useState<IReviewItem | null>(null);
   const [reason, setReason] = useState("");
 
   const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } =
-    useInfiniteQuery(reviewQueueInfiniteQueryOptions(status));
+    useInfiniteQuery({
+      ...reviewQueueInfiniteQueryOptions(status),
+      enabled: !!session,
+    });
 
   const approveMutation = useApproveReviewMutation();
   const rejectMutation = useRejectReviewMutation();
