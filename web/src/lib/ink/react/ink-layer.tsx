@@ -1,7 +1,6 @@
 import * as React from "react"
 
-import type {UseInkOptions} from "@/lib/ink/react/hooks";
-import {  useInkCore } from "@/lib/ink/react/hooks"
+import { useInkCore, type UseInkOptions } from "@/lib/ink/react/hooks"
 import { InkSvg } from "@/lib/ink/react/svg"
 
 export type InkProps<P> = UseInkOptions<P>

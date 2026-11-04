@@ -9,8 +9,8 @@ import { cn } from "@/lib/utils"
 
 type CardProps = PaperProps
 
-function Card({ className, stock = "card", rules = "none", ...props }: CardProps) {
-  return <Paper data-slot="card" stock={stock} rules={rules} className={cn("flex flex-col gap-6 py-6 text-card-foreground", className)} {...props} />
+function Card({ className, stock = "card", rules = "none", tape = "top", ...props }: CardProps) {
+  return <Paper data-slot="card" stock={stock} rules={rules} tape={tape} className={cn("flex flex-col gap-6 py-6 text-card-foreground", className)} {...props} />
 }
 
 type RuleProps = {

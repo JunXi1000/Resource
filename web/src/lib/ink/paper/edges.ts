@@ -7,8 +7,8 @@ export type EdgeKind = 'cut' | 'torn' | 'deckle' | 'crimp' | 'zig' | 'perf' | 's
 export type EdgeSide = 'top' | 'right' | 'bottom' | 'left'
 export type EdgeSpec = EdgeKind | Partial<Record<EdgeSide, EdgeKind>>
 
-export const EDGE_KINDS: ReadonlyArray<EdgeKind> = ['cut', 'torn', 'deckle', 'crimp', 'zig', 'perf', 'scallop']
-const SIDES: ReadonlyArray<EdgeSide> = ['top', 'right', 'bottom', 'left']
+export const EDGE_KINDS: readonly EdgeKind[] = ['cut', 'torn', 'deckle', 'crimp', 'zig', 'perf', 'scallop']
+const SIDES: readonly EdgeSide[] = ['top', 'right', 'bottom', 'left']
 
 export function edgeSides(edge: EdgeSpec | undefined): [EdgeKind, EdgeKind, EdgeKind, EdgeKind] {
   if (!edge) return ['cut', 'cut', 'cut', 'cut']
@@ -50,14 +50,14 @@ interface Sample {
 
 const NOISE_PERIODS = { lo: 22, mid: 3.2, hi: 0.9, fz: 1.1 }
 
-function roughSide(kind: keyof typeof ROUGH, len: number, rng: Rng, amp: number): Array<Sample> {
+function roughSide(kind: keyof typeof ROUGH, len: number, rng: Rng, amp: number): Sample[] {
   const K = ROUGH[kind]
   const lo = noise1(rng.fork('lo'), len, NOISE_PERIODS.lo)
   const mid = noise1(rng.fork('mid'), len, NOISE_PERIODS.mid)
   const hi = noise1(rng.fork('hi'), len, NOISE_PERIODS.hi)
   const fz = noise1(rng.fork('fz'), len, NOISE_PERIODS.fz)
   const cnt = Math.max(2, Math.round(len / K.step))
-  const out: Array<Sample> = []
+  const out: Sample[] = []
   for (let i = 0; i <= cnt; i++) {
     const u = (i / cnt) * len
     const fade = Math.min(1, u / 7, (len - u) / 7)
@@ -68,11 +68,11 @@ function roughSide(kind: keyof typeof ROUGH, len: number, rng: Rng, amp: number)
   return out
 }
 
-function zigSide(len: number, rng: Rng, amp: number): Array<Sample> {
+function zigSide(len: number, rng: Rng, amp: number): Sample[] {
   const n = Math.max(2, Math.round(len / ZIG.pitch))
   const pitch = len / n
   const jit = noise1(rng.fork('zj'), len, 30)
-  const out: Array<Sample> = []
+  const out: Sample[] = []
   for (let i = 0; i <= n; i++) {
     out.push({ u: i * pitch, e: 0.15, f: 0 })
     if (i < n) out.push({ u: (i + 0.5) * pitch, e: (ZIG.depth + 0.5 * jit((i + 0.5) * pitch)) * amp, f: 0 })
@@ -80,11 +80,11 @@ function zigSide(len: number, rng: Rng, amp: number): Array<Sample> {
   return out
 }
 
-function perfSide(len: number, rng: Rng, amp: number): Array<Sample> {
+function perfSide(len: number, rng: Rng, amp: number): Sample[] {
   const n = Math.max(2, Math.round(len / PERF.pitch))
   const pitch = len / n
   const jit = noise1(rng.fork('pj'), len, 40)
-  const out: Array<Sample> = [{ u: 0, e: 0.3, f: 0 }]
+  const out: Sample[] = [{ u: 0, e: 0.3, f: 0 }]
   for (let i = 0; i < n; i++) {
     const c = (i + 0.5) * pitch
     const r = pitch * 0.4
@@ -98,11 +98,11 @@ function perfSide(len: number, rng: Rng, amp: number): Array<Sample> {
   return out
 }
 
-function scallopSide(len: number, rng: Rng, amp: number): Array<Sample> {
+function scallopSide(len: number, rng: Rng, amp: number): Sample[] {
   const n = Math.max(2, Math.round(len / SCALLOP.pitch))
   const pitch = len / n
   const R = pitch / 2
-  const out: Array<Sample> = []
+  const out: Sample[] = []
   for (let i = 0; i < n; i++) {
     const c = (i + 0.5) * pitch
     const wob = 1 + 0.05 * (rng.fork('s' + i)() - 0.5)
@@ -114,7 +114,7 @@ function scallopSide(len: number, rng: Rng, amp: number): Array<Sample> {
   return out
 }
 
-function side(kind: EdgeKind, len: number, rng: Rng, amp: number): Array<Sample> {
+function side(kind: EdgeKind, len: number, rng: Rng, amp: number): Sample[] {
   switch (kind) {
     case 'zig':
       return zigSide(len, rng, amp)
@@ -133,8 +133,8 @@ export interface OutlineOpts {
 }
 
 export interface Outline {
-  pts: Array<Pt>
-  rim: Array<Pt>
+  pts: Pt[]
+  rim: Pt[]
   crisp: boolean
   reach: number
   fibrous: boolean
@@ -150,8 +150,8 @@ export function sheetOutline(rng: Rng, w: number, h: number, edge: EdgeSpec, o: 
     side(kinds[2], w, rng.fork('bottom'), amp),
     side(kinds[3], h, rng.fork('left'), amp),
   ]
-  const pts: Array<Pt> = []
-  const rim: Array<Pt> = []
+  const pts: Pt[] = []
+  const rim: Pt[] = []
   let reach = 0
   const push = (p: Pt, r: Pt, f: number) => {
     pts.push(p)
@@ -177,7 +177,7 @@ export function sheetOutline(rng: Rng, w: number, h: number, edge: EdgeSpec, o: 
   return { pts, rim, crisp, reach, fibrous, sides }
 }
 
-function chamferCorner(pts: Array<Pt>, rim: Array<Pt>, w: number, h: number, c: number): void {
+function chamferCorner(pts: Pt[], rim: Pt[], w: number, h: number, c: number): void {
   for (let i = pts.length - 1; i >= 0; i--) {
     const p = pts[i]
     if (p[0] > w - c - 0.5 && p[1] > h - c - 0.5 && p[0] + p[1] > w + h - c) {
@@ -186,7 +186,7 @@ function chamferCorner(pts: Array<Pt>, rim: Array<Pt>, w: number, h: number, c: 
     }
   }
   const at = pts.findIndex((p, i) => i > 0 && p[1] > h - 2 && p[0] < w - c && pts[i - 1][0] > p[0])
-  const ins: Array<Pt> = [
+  const ins: Pt[] = [
     [w - 0.3, h - c],
     [w - c, h - 0.3],
   ]

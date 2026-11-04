@@ -1,8 +1,8 @@
-import type { PaintKey } from '@/lib/ink/paint'
-import type { Pt } from '@/lib/ink/types'
 import { blobFill } from '@/lib/ink/fills'
 import { defineRecipe } from '@/lib/ink/recipes'
+import type { PaintKey } from '@/lib/ink/paint'
 import { seg } from '@/lib/ink/geom'
+import type { Pt } from '@/lib/ink/types'
 
 export interface RevealNibParams {
   color?: PaintKey

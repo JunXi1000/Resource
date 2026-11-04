@@ -1,8 +1,6 @@
+import { tileOffsets, type SheetShadowKind } from '@/lib/ink/paper/shadows'
+import { STICKY_VEIL, TOOTH_TILES, stockOf, type StockName } from '@/lib/ink/paper/stocks'
 import type { PaperTileName } from '@/lib/ink/textures'
-import type {SheetShadowKind} from '@/lib/ink/paper/shadows';
-import type {StockName} from '@/lib/ink/paper/stocks';
-import {  tileOffsets } from '@/lib/ink/paper/shadows'
-import { STICKY_VEIL,  TOOTH_TILES, stockOf } from '@/lib/ink/paper/stocks'
 
 export interface FaceSpec {
   d: string
@@ -42,7 +40,7 @@ export function splitFaces(markup: string): Array<string | FaceSpec> {
 
 export const hasFace = (markup: string): boolean => markup.includes('<!--ll-face:')
 
-export function tilesOf(stocks: Iterable<StockName>): Array<PaperTileName> {
+export function tilesOf(stocks: Iterable<StockName>): PaperTileName[] {
   const names = new Set<PaperTileName>()
   for (const s of stocks) for (const [t] of TOOTH_TILES[stockOf(s).tooth]) names.add(t as PaperTileName)
   return [...names]
@@ -72,12 +70,12 @@ const ARITY: Record<string, number> = { m: 2, l: 2, h: 1, v: 1, c: 6, s: 4, q: 4
 
 interface Seg {
   cmd: string
-  args: Array<number>
+  args: number[]
 }
 
-function parsePath(d: string): Array<Seg> | null {
+function parsePath(d: string): Seg[] | null {
   const tokens = d.match(/[a-zA-Z]|-?\d*\.?\d+(?:e[-+]?\d+)?/g) ?? []
-  const out: Array<Seg> = []
+  const out: Seg[] = []
   let cmd = ''
   let i = 0
   while (i < tokens.length) {

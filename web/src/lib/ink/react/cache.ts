@@ -1,9 +1,8 @@
 import type { Knobs } from '@/lib/ink/builder'
 import type { Tier } from '@/lib/ink/types'
-import type {Box, Density, Dir, InkLayerName, RawFrame, Recipe} from '@/lib/ink/recipes';
 import {
-       
-  bucketBox, knobsKey, orderLayers, runCounter, runRecipe, stableStringify
+  bucketBox, knobsKey, orderLayers, runCounter, runRecipe, stableStringify,
+  type Box, type Density, type Dir, type InkLayerName, type RawFrame, type Recipe,
 } from '@/lib/ink/recipes'
 
 export interface FrameRequest<P> {
@@ -15,14 +14,14 @@ export interface FrameRequest<P> {
   dir: Dir
   knobs: Knobs
   pad?: number
-  lazy?: ReadonlyArray<InkLayerName>
+  lazy?: readonly InkLayerName[]
   paramsKey?: string
 }
 
 export interface Frame {
   key: string
   parts: Partial<Record<InkLayerName, string>>
-  layers: Array<InkLayerName>
+  layers: InkLayerName[]
   pad: number
   w: number
   h: number
@@ -110,7 +109,7 @@ export function inkFrame<P>(recipe: Recipe<P>, req: FrameRequest<P>): Frame {
   const key = frameKey(recipe, req)
   const box = bucketBox(req.box.w, req.box.h)
   const want = (req.lazy ?? []).filter((l) => recipe.lazy.includes(l))
-  const run = (lazy: ReadonlyArray<InkLayerName>, lazyOnly: boolean): RawFrame => runRecipe(recipe, { ...req, box, lazy, lazyOnly })
+  const run = (lazy: readonly InkLayerName[], lazyOnly: boolean): RawFrame => runRecipe(recipe, { ...req, box, lazy, lazyOnly })
   let entry = inkCache.get(key)
   if (entry) inkCache.hits++
   else {
@@ -123,7 +122,7 @@ export function inkFrame<P>(recipe: Recipe<P>, req: FrameRequest<P>): Frame {
       else parts[k] = raw.parts[k]
     }
     for (const l of want) lazy[l] ??= ''
-    entry = { raw: { ...raw, parts, layers: orderLayers(Object.keys(parts) as Array<InkLayerName>) }, lazy, chars: sum(parts) + sum(lazy) }
+    entry = { raw: { ...raw, parts, layers: orderLayers(Object.keys(parts) as InkLayerName[]) }, lazy, chars: sum(parts) + sum(lazy) }
     inkCache.set(key, entry)
   }
   const missing = want.filter((l) => entry.lazy[l] === undefined)
@@ -134,10 +133,10 @@ export function inkFrame<P>(recipe: Recipe<P>, req: FrameRequest<P>): Frame {
   }
   const parts: Frame['parts'] = { ...entry.raw.parts }
   for (const l of want) if (entry.lazy[l]) parts[l] = entry.lazy[l]
-  return { key, parts, layers: orderLayers(Object.keys(parts) as Array<InkLayerName>), pad: entry.raw.pad, w: box.w, h: box.h, chars: sum(parts) }
+  return { key, parts, layers: orderLayers(Object.keys(parts) as InkLayerName[]), pad: entry.raw.pad, w: box.w, h: box.h, chars: sum(parts) }
 }
 
-export function frameSvg(frame: Pick<Frame, 'parts' | 'layers'>, layers?: ReadonlyArray<InkLayerName>, wrap = true): string {
+export function frameSvg(frame: Pick<Frame, 'parts' | 'layers'>, layers?: readonly InkLayerName[], wrap = true): string {
   let out = ''
   for (const k of frame.layers) {
     if (layers && !layers.includes(k)) continue

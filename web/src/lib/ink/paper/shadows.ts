@@ -4,7 +4,7 @@ export type SheetShadowKind = 'hair' | 'loose' | 'lift' | 'slip' | 'card' | 'pad
 
 type Layer = readonly [dy: number, blur: number, spread: number, a: number]
 
-export const SHADOW_LAYERS: Record<SheetShadowKind, ReadonlyArray<Layer>> = {
+export const SHADOW_LAYERS: Record<SheetShadowKind, readonly Layer[]> = {
   hair: [[1, 1.5, 0, 0.16]],
   loose: [[1, 2, 0, 0.12], [6, 16, -2, 0.12]],
   lift: [[1, 1.5, 0, 0.2], [7, 16, -4, 0.2]],
@@ -42,7 +42,7 @@ export function farShadow(kind: SheetShadowKind, all = false): string {
 }
 
 export type DropKind = 'sheet' | 'sticker' | 'tape' | 'prop'
-const DROP: Record<DropKind, ReadonlyArray<readonly [number, number, number]>> = {
+const DROP: Record<DropKind, readonly (readonly [number, number, number])[]> = {
   sheet: [[1, 0.75, 0.22], [8, 8, 0.14]],
   sticker: [[1, 0.6, 0.26], [3, 3, 0.14]],
   tape: [[0.6, 0.8, 0.18]],
@@ -69,7 +69,7 @@ export function tiltVars(deg: number): Record<'--ll-tilt', string> {
   return { '--ll-tilt': `${deg}deg` }
 }
 
-export function tileOffsets(seed: string | number, sizes: ReadonlyArray<readonly [number, number]>): string {
+export function tileOffsets(seed: string | number, sizes: readonly (readonly [number, number])[]): string {
   const r = makeRng(`tex:${seed}`)
   return sizes.map(([w, h]) => `${-Math.floor(r() * w)}px ${-Math.floor(r() * h)}px`).join(', ')
 }

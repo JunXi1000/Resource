@@ -1,8 +1,6 @@
 import type { BBox, Pt, Tier } from '@/lib/ink/types'
-import type {Q} from '@/lib/ink/paint';
-import type {Rng} from '@/lib/ink/rng';
-import {  fmtUnits } from '@/lib/ink/paint'
-import {  clamp } from '@/lib/ink/rng'
+import { fmtUnits, type Q } from '@/lib/ink/paint'
+import { clamp, type Rng } from '@/lib/ink/rng'
 import { noise1 } from '@/lib/ink/noise'
 
 export const TAU = Math.PI * 2
@@ -20,11 +18,11 @@ export const TIERS: Record<Tier, TierCfg> = {
 
 const mixPt = (a: Pt, b: Pt, t: number): Pt => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]
 
-export function seg(x1: number, y1: number, x2: number, y2: number, bow = 0, cnt = 8): Array<Pt> {
+export function seg(x1: number, y1: number, x2: number, y2: number, bow = 0, cnt = 8): Pt[] {
   const dx = x2 - x1, dy = y2 - y1
   const len = Math.hypot(dx, dy) || 1
   const nx = -dy / len, ny = dx / len
-  const out: Array<Pt> = []
+  const out: Pt[] = []
   for (let i = 0; i <= cnt; i++) {
     const t = i / cnt
     const b = bow * Math.sin(Math.PI * t)
@@ -33,8 +31,8 @@ export function seg(x1: number, y1: number, x2: number, y2: number, bow = 0, cnt
   return out
 }
 
-export function densify(pts: Array<Pt>, step = 1.5): Array<Pt> {
-  const out: Array<Pt> = [[pts[0][0], pts[0][1]]]
+export function densify(pts: Pt[], step = 1.5): Pt[] {
+  const out: Pt[] = [[pts[0][0], pts[0][1]]]
   for (let i = 1; i < pts.length; i++) {
     const a = pts[i - 1], b = pts[i]
     const c = Math.max(1, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / step))
@@ -43,11 +41,11 @@ export function densify(pts: Array<Pt>, step = 1.5): Array<Pt> {
   return out
 }
 
-export function spline(pts: Array<Pt>, step = 1.5): Array<Pt> {
+export function spline(pts: Pt[], step = 1.5): Pt[] {
   if (pts.length < 3) return densify(pts, step)
-  const out: Array<Pt> = []
+  const out: Pt[] = []
   const first = pts[0], second = pts[1], last = pts[pts.length - 1], prev = pts[pts.length - 2]
-  const P: Array<Pt> = [[first[0] - (second[0] - first[0]), first[1] - (second[1] - first[1])], ...pts, [last[0] + (last[0] - prev[0]), last[1] + (last[1] - prev[1])]]
+  const P: Pt[] = [[first[0] - (second[0] - first[0]), first[1] - (second[1] - first[1])], ...pts, [last[0] + (last[0] - prev[0]), last[1] + (last[1] - prev[1])]]
   for (let i = 1; i < P.length - 2; i++) {
     const p0 = P[i - 1], p1 = P[i], p2 = P[i + 1], p3 = P[i + 2]
     const d01 = Math.max(1e-3, Math.hypot(p1[0] - p0[0], p1[1] - p0[1]) ** 0.5)
@@ -69,9 +67,9 @@ export function spline(pts: Array<Pt>, step = 1.5): Array<Pt> {
   return out
 }
 
-export function fillet(pts: Array<Pt>, r: number): Array<Pt> {
+export function fillet(pts: Pt[], r: number): Pt[] {
   if (pts.length < 3 || r <= 0) return pts
-  const out: Array<Pt> = [pts[0]]
+  const out: Pt[] = [pts[0]]
   for (let i = 1; i < pts.length - 1; i++) {
     const a = pts[i - 1], b = pts[i], c = pts[i + 1]
     const l1 = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1
@@ -88,8 +86,8 @@ export function fillet(pts: Array<Pt>, r: number): Array<Pt> {
   return out
 }
 
-export function rounded(verts: Array<Pt>, rad: number, rng: Rng, per = 5): Array<Pt> {
-  const out: Array<Pt> = [[verts[0][0], verts[0][1]]]
+export function rounded(verts: Pt[], rad: number, rng: Rng, per = 5): Pt[] {
+  const out: Pt[] = [[verts[0][0], verts[0][1]]]
   for (let i = 1; i < verts.length - 1; i++) {
     const P = verts[i - 1], V = verts[i], N = verts[i + 1]
     const l1 = Math.hypot(P[0] - V[0], P[1] - V[1]) || 1
@@ -113,7 +111,7 @@ export function rounded(verts: Array<Pt>, rad: number, rng: Rng, per = 5): Array
   return out
 }
 
-export function pathLength(pts: Array<Pt>): number {
+export function pathLength(pts: Pt[]): number {
   let L = 0
   for (let i = 1; i < pts.length; i++) L += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1])
   return L
@@ -126,7 +124,7 @@ export interface Resampled {
   L: number
 }
 
-export function resample(P: Array<Pt>, step: number): Resampled {
+export function resample(P: Pt[], step: number): Resampled {
   const cum = [0]
   for (let i = 1; i < P.length; i++) cum.push(cum[i - 1] + Math.hypot(P[i][0] - P[i - 1][0], P[i][1] - P[i - 1][1]))
   const L = cum[cum.length - 1]
@@ -146,7 +144,7 @@ export function resample(P: Array<Pt>, step: number): Resampled {
   return { X, Y, S, L }
 }
 
-export function simplifyClosed(pts: Array<Pt>, tol: number): Array<Pt> {
+export function simplifyClosed(pts: Pt[], tol: number): Pt[] {
   const m = pts.length
   if (m < 12 || tol <= 0) return pts
   let far = 0, fd = -1
@@ -172,7 +170,7 @@ export function simplifyClosed(pts: Array<Pt>, tol: number): Array<Pt> {
   }
   rec(0, far)
   rec(far, 0)
-  const out: Array<Pt> = []
+  const out: Pt[] = []
   for (let i = 0; i < m; i++) if (keep[i]) out.push(pts[i])
   return out
 }
@@ -257,7 +255,7 @@ export class PathWriter {
   }
 }
 
-export function smoothClosed(pts: Array<Pt>, cfg: TierCfg): string {
+export function smoothClosed(pts: Pt[], cfg: TierCfg): string {
   const p = simplifyClosed(pts, cfg.tol)
   const m = p.length
   if (m < 3) return ''
@@ -270,7 +268,7 @@ export function smoothClosed(pts: Array<Pt>, cfg: TierCfg): string {
   return w.Z().d
 }
 
-export function simplePath(pts: Array<Pt>, cfg: TierCfg): string {
+export function simplePath(pts: Pt[], cfg: TierCfg): string {
   const p = simplifyClosed(pts, cfg.tol)
   if (p.length < 3) return ''
   const w = new PathWriter(cfg.q)
@@ -279,7 +277,7 @@ export function simplePath(pts: Array<Pt>, cfg: TierCfg): string {
   return w.Z().d
 }
 
-export function polyPath(pts: Array<Pt>, q: Q = 20): string {
+export function polyPath(pts: Pt[], q: Q = 20): string {
   if (pts.length < 3) return ''
   const w = new PathWriter(q)
   w.M(pts[0][0], pts[0][1])
@@ -287,7 +285,7 @@ export function polyPath(pts: Array<Pt>, q: Q = 20): string {
   return w.Z().d
 }
 
-export function area(pts: Array<Pt>): number {
+export function area(pts: Pt[]): number {
   let a = 0
   for (let i = 0; i < pts.length; i++) {
     const p = pts[i], q = pts[(i + 1) % pts.length]
@@ -296,7 +294,7 @@ export function area(pts: Array<Pt>): number {
   return a / 2
 }
 
-export function bboxOf(pts: ReadonlyArray<Pt>): BBox {
+export function bboxOf(pts: readonly Pt[]): BBox {
   let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity
   for (const p of pts) {
     if (p[0] < x0) x0 = p[0]
@@ -307,7 +305,7 @@ export function bboxOf(pts: ReadonlyArray<Pt>): BBox {
   return [x0, y0, x1, y1]
 }
 
-export function centroid(poly: Array<Pt>): Pt {
+export function centroid(poly: Pt[]): Pt {
   let a = 0, cx = 0, cy = 0
   for (let i = 0; i < poly.length; i++) {
     const [x0, y0] = poly[i]
@@ -324,7 +322,7 @@ export function centroid(poly: Array<Pt>): Pt {
   return [cx / (3 * a), cy / (3 * a)]
 }
 
-export function inside(pts: Array<Pt>, x: number, y: number): boolean {
+export function inside(pts: Pt[], x: number, y: number): boolean {
   let c = false
   for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
     const a = pts[i], b = pts[j]
@@ -333,7 +331,7 @@ export function inside(pts: Array<Pt>, x: number, y: number): boolean {
   return c
 }
 
-export function xform(pts: Array<Pt>, o: { dx?: number; dy?: number; rot?: number; sx?: number; sy?: number; about?: Pt } = {}): Array<Pt> {
+export function xform(pts: Pt[], o: { dx?: number; dy?: number; rot?: number; sx?: number; sy?: number; about?: Pt } = {}): Pt[] {
   const { dx = 0, dy = 0, rot = 0, sx = 1, sy = sx } = o
   const [cx, cy] = o.about ?? centroid(pts)
   const c = Math.cos(rot), s = Math.sin(rot)
@@ -343,10 +341,10 @@ export function xform(pts: Array<Pt>, o: { dx?: number; dy?: number; rot?: numbe
   })
 }
 
-export function roundRectPoly(x: number, y: number, w: number, h: number, r = 0, per = 5): Array<Pt> {
+export function roundRectPoly(x: number, y: number, w: number, h: number, r = 0, per = 5): Pt[] {
   r = Math.min(r, w / 2, h / 2)
   if (r < 0.3) return [[x, y], [x + w, y], [x + w, y + h], [x, y + h]]
-  const pts: Array<Pt> = []
+  const pts: Pt[] = []
   const arc = (cx: number, cy: number, a0: number): void => {
     for (let i = 0; i <= per; i++) {
       const a = a0 + (i / per) * (Math.PI / 2)
@@ -360,16 +358,16 @@ export function roundRectPoly(x: number, y: number, w: number, h: number, r = 0,
   return pts
 }
 
-export function rectPoly(x: number, y: number, w: number, h: number, r = 0, per = 5): Array<Pt> {
+export function rectPoly(x: number, y: number, w: number, h: number, r = 0, per = 5): Pt[] {
   return roundRectPoly(x, y, w, h, r, per)
 }
 
-export function pillPoly(x: number, y: number, w: number, h: number, per = 7): Array<Pt> {
+export function pillPoly(x: number, y: number, w: number, h: number, per = 7): Pt[] {
   return roundRectPoly(x, y, w, h, h / 2, per)
 }
 
-export function ellipsePoly(cx: number, cy: number, rx: number, ry: number, cnt = 28, rot = 0): Array<Pt> {
-  const pts: Array<Pt> = []
+export function ellipsePoly(cx: number, cy: number, rx: number, ry: number, cnt = 28, rot = 0): Pt[] {
+  const pts: Pt[] = []
   const c = Math.cos(rot), s = Math.sin(rot)
   for (let i = 0; i < cnt; i++) {
     const a = (i / cnt) * TAU
@@ -379,8 +377,8 @@ export function ellipsePoly(cx: number, cy: number, rx: number, ry: number, cnt 
   return pts
 }
 
-export function densifyClosed(pts: Array<Pt>, step = 4): Array<Pt> {
-  const out: Array<Pt> = []
+export function densifyClosed(pts: Pt[], step = 4): Pt[] {
+  const out: Pt[] = []
   for (let i = 0; i < pts.length; i++) {
     const a = pts[i], b = pts[(i + 1) % pts.length]
     const c = Math.max(1, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / step))
@@ -389,7 +387,7 @@ export function densifyClosed(pts: Array<Pt>, step = 4): Array<Pt> {
   return out
 }
 
-export function wobblePoly(pts: Array<Pt>, rng: Rng, amp: number, wl = 24): Array<Pt> {
+export function wobblePoly(pts: Pt[], rng: Rng, amp: number, wl = 24): Pt[] {
   const m = pts.length
   const cum = [0]
   for (let i = 1; i <= m; i++) cum.push(cum[i - 1] + Math.hypot(pts[i % m][0] - pts[i - 1][0], pts[i % m][1] - pts[i - 1][1]))
@@ -403,7 +401,7 @@ export function wobblePoly(pts: Array<Pt>, rng: Rng, amp: number, wl = 24): Arra
   })
 }
 
-export function offsetPoly(pts: Array<Pt>, d: number, dx = 0, dy = 0): Array<Pt> {
+export function offsetPoly(pts: Pt[], d: number, dx = 0, dy = 0): Pt[] {
   const m = pts.length
   const sg = area(pts) > 0 ? 1 : -1
   const nrm = (a: Pt, b: Pt): Pt => {
@@ -429,7 +427,7 @@ export interface Span {
   len: number
 }
 
-export function scanSpans(poly: Array<Pt>, angle: number, gap: number, rng: Rng, o: { jitter?: number; inset?: number; even?: boolean } = {}): Array<Span> {
+export function scanSpans(poly: Pt[], angle: number, gap: number, rng: Rng, o: { jitter?: number; inset?: number; even?: boolean } = {}): Span[] {
   const { jitter = 0.12, inset = 0, even = true } = o
   const bb = bboxOf(poly)
   const cx = (bb[0] + bb[2]) / 2, cy = (bb[1] + bb[3]) / 2
@@ -441,7 +439,7 @@ export function scanSpans(poly: Array<Pt>, angle: number, gap: number, rng: Rng,
     if (p < pmin) pmin = p
     if (p > pmax) pmax = p
   }
-  const offs: Array<number> = []
+  const offs: number[] = []
   if (even) {
     let lo = pmin + inset, hi = pmax - inset
     if (hi <= lo) lo = hi = (pmin + pmax) / 2
@@ -455,10 +453,10 @@ export function scanSpans(poly: Array<Pt>, angle: number, gap: number, rng: Rng,
       p += gap * (1 + (rng() - 0.5) * 2 * jitter)
     }
   }
-  const spans: Array<Span> = []
+  const spans: Span[] = []
   offs.forEach((off, row) => {
     const ox = cx + vx * off, oy = cy + vy * off
-    const ts: Array<number> = []
+    const ts: number[] = []
     for (let i = 0; i < poly.length; i++) {
       const [x0, y0] = poly[i]
       const [x1, y1] = poly[(i + 1) % poly.length]

@@ -1,11 +1,11 @@
 import type { Ink } from '@/lib/ink/builder'
-import type { Line, PenName, PenSpec, Pt, StrokeOpts } from '@/lib/ink/types'
 import { paint } from '@/lib/ink/paint'
 import { hashSeed } from '@/lib/ink/rng'
+import type { Line, PenName, PenSpec, Pt, StrokeOpts } from '@/lib/ink/types'
 
 export interface MarkRevealOpts {
   id: string
-  lines: Array<Line>
+  lines: Line[]
   pen: PenName | PenSpec
   box: { w: number; h: number }
   pad: number

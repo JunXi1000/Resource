@@ -7,7 +7,7 @@ export type PaintKey =
   | 'sticky-yellow' | 'sticky-green' | 'sticky-orange' | 'sticky-pink' | 'sticky-blue'
   | 'current'
 
-export const PAINT_KEYS: ReadonlyArray<PaintKey> = [
+export const PAINT_KEYS: readonly PaintKey[] = [
   'ink', 'ink-soft', 'ink-you', 'pencil', 'pencil-mark', 'red', 'green', 'marker', 'hi', 'focus',
   'paper', 'paper-shade', 'slip', 'card', 'graph', 'kraft', 'check', 'photo', 'desk', 'desk-deep',
   'rule-blue', 'rule-red', 'pad', 'pad-rule', 'check-rule',

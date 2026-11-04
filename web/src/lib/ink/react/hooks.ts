@@ -2,14 +2,12 @@ import * as React from "react"
 
 import type { Knobs } from "@/lib/ink/builder"
 import type { Tier } from "@/lib/ink/types"
-import type {Frame} from "@/lib/ink/react/cache";
-import type {Box, Density, Dir, InkLayerName, Recipe} from "@/lib/ink/recipes";
 import { ensureInkDefs } from "@/lib/ink/react/defs"
-import {  inkFrame } from "@/lib/ink/react/cache"
+import { inkFrame, type Frame } from "@/lib/ink/react/cache"
 import { InkSvg } from "@/lib/ink/react/svg"
 import {
-   DEFAULT_KNOBS, 
-     bucketBox, stableStringify
+  DEFAULT_KNOBS, bucketBox, stableStringify,
+  type Box, type Density, type Dir, type InkLayerName, type Recipe,
 } from "@/lib/ink/recipes"
 
 export interface InkScopeProps {
@@ -55,7 +53,7 @@ export function useInkSeed(seed?: string | number): string {
 
 type AnyRef<T> = React.Ref<T> | undefined
 
-export function mergeRefs<T>(...refs: Array<AnyRef<T>>): React.RefCallback<T> {
+export function mergeRefs<T>(...refs: AnyRef<T>[]): React.RefCallback<T> {
   return (node) => {
     const cleanups: Array<() => void> = []
     for (const ref of refs) {
@@ -75,7 +73,7 @@ export function mergeRefs<T>(...refs: Array<AnyRef<T>>): React.RefCallback<T> {
   }
 }
 
-export function useMergedRef<T>(...refs: Array<AnyRef<T>>): React.RefCallback<T> {
+export function useMergedRef<T>(...refs: AnyRef<T>[]): React.RefCallback<T> {
   return React.useCallback(mergeRefs(...refs), refs)
 }
 
@@ -132,7 +130,7 @@ export interface UseInkOptions<P> {
   pad?: number
   size?: readonly [number, number]
   tier?: Tier
-  layers?: "lazy" | "all" | ReadonlyArray<InkLayerName>
+  layers?: "lazy" | "all" | readonly InkLayerName[]
   seed?: string | number
   still?: boolean
 }
@@ -151,9 +149,9 @@ export interface UseInkCore {
   still: boolean
 }
 
-const EMPTY: ReadonlyArray<InkLayerName> = []
+const EMPTY: readonly InkLayerName[] = []
 
-const TRIGGERS: Partial<Record<InkLayerName, ReadonlyArray<string>>> = {
+const TRIGGERS: Partial<Record<InkLayerName, readonly string[]>> = {
   focus: ["focusin"],
   hover: ["pointerenter"],
   pressed: ["pointerdown", "keydown"],
@@ -179,7 +177,7 @@ export function useInkCore<P>(o: UseInkOptions<P>): UseInkCore {
   const tier = o.tier ?? ctx.tier
   const { recipe } = o
   const { ref: boxRef, box } = useInkBox({ size: o.size })
-  const [lazyOn, setLazyOn] = React.useState<ReadonlyArray<InkLayerName>>(EMPTY)
+  const [lazyOn, setLazyOn] = React.useState<readonly InkLayerName[]>(EMPTY)
   const [seen, setSeen] = React.useState<{ dir: Dir; under: Dir } | null>(null)
   const dir = seen && (!ctx.hasProvider || seen.under === ctx.dir) ? seen.dir : ctx.dir
 
@@ -214,8 +212,8 @@ export function useInkCore<P>(o: UseInkOptions<P>): UseInkCore {
     [boxRef, lazyDecl, want, ctx.hasProvider, ctx.dir],
   )
 
-  const eager: ReadonlyArray<InkLayerName> =
-    o.layers === "all" || (o.layers === undefined && tier === "hi") ? lazyDecl : Array.isArray(o.layers) ? (o.layers as ReadonlyArray<InkLayerName>) : EMPTY
+  const eager: readonly InkLayerName[] =
+    o.layers === "all" || (o.layers === undefined && tier === "hi") ? lazyDecl : Array.isArray(o.layers) ? (o.layers as readonly InkLayerName[]) : EMPTY
   const lazyKey = [...new Set([...eager, ...lazyOn])].sort().join(",")
   const paramsKey = stableStringify(o.params)
   const frame = React.useMemo(
@@ -223,7 +221,7 @@ export function useInkCore<P>(o: UseInkOptions<P>): UseInkCore {
       box
         ? inkFrame(recipe, {
             box, params: o.params, seed, tier, density: ctx.density, dir, knobs: ctx.knobs, pad: o.pad, paramsKey,
-            lazy: lazyKey ? (lazyKey.split(",") as Array<InkLayerName>) : undefined,
+            lazy: lazyKey ? (lazyKey.split(",") as InkLayerName[]) : undefined,
           })
         : null,
     [recipe, box, seed, tier, ctx.density, dir, ctx.knobs, o.pad, paramsKey, lazyKey],

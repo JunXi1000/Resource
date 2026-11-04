@@ -1,6 +1,6 @@
-import type { Line, Pt } from '@/lib/ink/types'
 import { Ink } from '@/lib/ink/builder'
-import { RULER, loopLines } from '@/lib/ink/shapes'
+import { loopLines, RULER } from '@/lib/ink/shapes'
+import type { Line, Pt } from '@/lib/ink/types'
 
 export const EDGE_LEN = 96
 export const EDGE_TH = 5
@@ -22,7 +22,7 @@ export function edgeTile(seed: string, vertical: boolean): string {
   const w = vertical ? EDGE_TH : EDGE_LEN
   const h = vertical ? EDGE_LEN : EDGE_TH
   const c = EDGE_TH / 2
-  const ends: Array<Pt> = vertical ? [[c, -16], [c, EDGE_LEN + 16]] : [[-16, c], [EDGE_LEN + 16, c]]
+  const ends: Pt[] = vertical ? [[c, -16], [c, EDGE_LEN + 16]] : [[-16, c], [EDGE_LEN + 16, c]]
   return tile(seed, w, h, (ink) => ink.stroke(ends, 'pencil', { ...CURRENT, ...RULER, width: 0.95, simple: true }), 'lo', true)
 }
 
@@ -33,7 +33,7 @@ export function hatchTile(seed: string): string {
     const J = Array.from({ length: 5 }, () => rng.gauss(0, 0.35))
     const width = rng.range(0.86, 1.02)
     const slot = (i: number): number => J[((i % 5) + 5) % 5]
-    const lines: Array<Line> = []
+    const lines: Line[] = []
     for (let i = -4; i <= 9; i++) {
       const x0 = i * gap
       const top = slot(i), bot = slot(i - 3)

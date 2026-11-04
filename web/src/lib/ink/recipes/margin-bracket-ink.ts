@@ -1,7 +1,7 @@
-import type { Line } from '@/lib/ink/types'
 import { defineRecipe } from '@/lib/ink/recipes'
-import { REVEAL_DASH, reveal, revealId } from '@/lib/ink/recipes/draw-on-ink'
+import { reveal, revealId, REVEAL_DASH } from '@/lib/ink/recipes/draw-on-ink'
 import { bracketLines } from '@/lib/ink/shapes'
+import type { Line } from '@/lib/ink/types'
 
 export interface MarginBracketParams {
   kind: 'square' | 'curly'
@@ -18,7 +18,7 @@ export const marginBracketRecipe = defineRecipe<MarginBracketParams>({
     const rtl = ctx.dir === 'rtl'
     const dir = rtl ? -1 : 1
     const x = rtl ? w - 1.5 : 1.5
-    const lines: Array<Line> = bracketLines(ink.next('bracket'), x, 1, Math.max(8, h - 2), { kind, dir })
+    const lines: Line[] = bracketLines(ink.next('bracket'), x, 1, Math.max(8, h - 2), { kind, dir })
     ink.layer('rest', () => {
       reveal(ink, {
         id: revealId(ctx.seed, 'b'),

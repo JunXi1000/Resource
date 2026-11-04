@@ -5,11 +5,9 @@ import * as React from "react"
 import type { Knobs } from "@/lib/ink/builder"
 import type { Tier } from "@/lib/ink/types"
 import type { PaperTileName } from "@/lib/ink/textures"
-import type {InkContextValue, InkScopeProps} from "@/lib/ink/react/hooks";
-import type {Density, Dir} from "@/lib/ink/recipes";
 import { InkDefs, InkTiles } from "@/lib/ink/react/defs"
-import { InkContext   } from "@/lib/ink/react/hooks"
-import { DEFAULT_KNOBS,   resolveKnobs, stableStringify } from "@/lib/ink/recipes"
+import { InkContext, type InkContextValue, type InkScopeProps } from "@/lib/ink/react/hooks"
+import { DEFAULT_KNOBS, resolveKnobs, stableStringify, type Density, type Dir } from "@/lib/ink/recipes"
 
 export interface InkProviderProps {
   tier?: Tier
@@ -18,9 +16,9 @@ export interface InkProviderProps {
   theme?: string
   dir?: Dir
   knobs?: Partial<Knobs>
-  textures?: boolean | ReadonlyArray<PaperTileName>
+  textures?: boolean | readonly PaperTileName[]
   defs?: boolean
-  patterns?: boolean | ReadonlyArray<PaperTileName>
+  patterns?: boolean | readonly PaperTileName[]
   children?: React.ReactNode
 }
 

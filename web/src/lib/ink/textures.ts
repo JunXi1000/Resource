@@ -1,15 +1,13 @@
-import type {GrainMaskKind, GrainTile} from '@/lib/ink/textures.generated';
-import type {PaperTile, PaperTileName} from '@/lib/ink/textures-paper.generated';
-import { GRAIN_TILES   } from '@/lib/ink/textures.generated'
+import { GRAIN_TILES, type GrainMaskKind, type GrainTile } from '@/lib/ink/textures.generated'
 import {
-  PAPER_CLOUD, PAPER_FIBRE, PAPER_KRAFT, PAPER_LINEN, PAPER_RELIEF, PAPER_SLIP, PAPER_TILES
-   
+  PAPER_TILES, PAPER_RELIEF, PAPER_SLIP, PAPER_FIBRE, PAPER_CLOUD, PAPER_LINEN, PAPER_KRAFT,
+  type PaperTile, type PaperTileName,
 } from '@/lib/ink/textures-paper.generated'
 
 export type { GrainMaskKind, GrainTile, PaperTile, PaperTileName }
 export { GRAIN_TILES, PAPER_TILES }
 
-export const GRAIN_KINDS = ['felt', 'marker', 'graphite', 'waxy', 'stamp'] as const satisfies ReadonlyArray<GrainMaskKind>
+export const GRAIN_KINDS = ['felt', 'marker', 'graphite', 'waxy', 'stamp'] as const satisfies readonly GrainMaskKind[]
 
 export const GRAIN_VARIANTS = 6
 
@@ -32,7 +30,7 @@ export const grainMaskUrl = (kind: GrainMaskKind, variant?: number, prefix?: str
 export const grainVariantFor = (seed: number): number => (Math.imul(seed | 0, 0x9e3779b1) >>> 7) % GRAIN_VARIANTS
 
 export interface MaskDefsOptions {
-  kinds?: ReadonlyArray<GrainMaskKind>
+  kinds?: readonly GrainMaskKind[]
   prefix?: string
   region?: { x: number; y: number; width: number; height: number } | 'bbox'
 }
@@ -116,7 +114,7 @@ const tileSize = (t: PaperTile) => `${t.cssWidth}px ${t.cssHeight}px`
 export function paperBackground(stock: PaperStock = 'paper', o: PaperBackgroundOptions = {}): TextureStyle {
   const cold = (o.tooth ?? (stock === 'paper' ? 'cold' : 'fine')) === 'cold'
   const on = { relief: cold && stock !== 'kraft', slip: !cold && stock !== 'kraft', fibre: true, cloud: true, kraft: stock === 'kraft', ...o.layers }
-  const order: Array<PaperTileName> = (['fibre', 'kraft', 'relief', 'slip', 'cloud'] as const).filter((n) => on[n])
+  const order: PaperTileName[] = (['fibre', 'kraft', 'relief', 'slip', 'cloud'] as const).filter((n) => on[n])
   const byName = { relief: PAPER_RELIEF, slip: PAPER_SLIP, fibre: PAPER_FIBRE, cloud: PAPER_CLOUD, kraft: PAPER_KRAFT } as Partial<Record<PaperTileName, PaperTile>>
   const tiles = order.map((n) => byName[n]!)
   const color = (PAPER_STOCKS as Record<string, string>)[stock] ?? stock
@@ -155,12 +153,12 @@ export const paperCss = (stock?: PaperStock, o?: PaperBackgroundOptions) => styl
 
 export const deskCss = (o?: DeskBackgroundOptions) => styleToCss(deskBackground(o))
 
-export function textureCssVars(names: ReadonlyArray<PaperTileName> = ['relief', 'slip', 'fibre', 'cloud', 'mottle', 'linen', 'kraft']): string {
+export function textureCssVars(names: readonly PaperTileName[] = ['relief', 'slip', 'fibre', 'cloud', 'mottle', 'linen', 'kraft']): string {
   return `:root{${names.map((n) => `--ll-tex-${n}:${url(PAPER_TILES[n].uri)}`).join(';')}}`
 }
 
 export interface PatternDefsOptions {
-  tiles?: ReadonlyArray<PaperTileName>
+  tiles?: readonly PaperTileName[]
   prefix?: string
 }
 
@@ -199,7 +197,7 @@ export interface TextureBytes {
 export function textureBytes() {
   const of = (uri: string, png: number): TextureBytes => ({ png, base64: uri.length })
   const masks = Object.fromEntries(GRAIN_KINDS.map((k) => [k, of(GRAIN_TILES[k].uri, GRAIN_TILES[k].bytes)])) as Record<GrainMaskKind, TextureBytes>
-  const paper = Object.fromEntries((Object.keys(PAPER_TILES) as Array<PaperTileName>).map((k) => [k, of(PAPER_TILES[k].uri, PAPER_TILES[k].bytes)])) as Record<PaperTileName, TextureBytes>
+  const paper = Object.fromEntries((Object.keys(PAPER_TILES) as PaperTileName[]).map((k) => [k, of(PAPER_TILES[k].uri, PAPER_TILES[k].bytes)])) as Record<PaperTileName, TextureBytes>
   const sum = (r: Record<string, TextureBytes>) => Object.values(r).reduce((a, b) => ({ png: a.png + b.png, base64: a.base64 + b.base64 }), { png: 0, base64: 0 })
   return { masks, paper, totals: { masks: sum(masks), paper: sum(paper) } }
 }

@@ -1,7 +1,6 @@
 import type { PaintKey } from '@/lib/ink/paint'
 import type { Accent } from '@/lib/ink/types'
-import type {Problem} from '@/lib/ink/art/dsl';
-import {  validateArt } from '@/lib/ink/art/dsl'
+import { validateArt, type Problem } from '@/lib/ink/art/dsl'
 
 export type ArtKind = 'icon' | 'doodle' | 'sticker' | 'mascot' | 'prop' | 'scene'
 
@@ -27,13 +26,13 @@ export type ArtAccent = Accent | 'hi' | 'kraft'
 
 export interface ArtDef {
   grid: 24 | 64 | readonly [number, number]
-  parts: ReadonlyArray<Part>
-  small?: ReadonlyArray<Part>
-  micro?: ReadonlyArray<Part>
-  hi?: ReadonlyArray<Part>
+  parts: readonly Part[]
+  small?: readonly Part[]
+  micro?: readonly Part[]
+  hi?: readonly Part[]
   accent?: ArtAccent
   nibK?: number
-  tags?: ReadonlyArray<string>
+  tags?: readonly string[]
   shade?: boolean
   tilt?: number
   rtl?: 'flip'
@@ -52,7 +51,7 @@ export interface BadgeGen {
   deco?: 'tick' | 'star' | 'sparkle' | 'swoosh' | 'percent'
   textColor?: Exclude<PaintKey, 'current'>
   tilt?: number
-  tags?: ReadonlyArray<string>
+  tags?: readonly string[]
   kind?: ArtKind
 }
 
@@ -70,7 +69,7 @@ export interface StampGen {
   dashed?: boolean
   wear?: number
   stars?: number
-  tags?: ReadonlyArray<string>
+  tags?: readonly string[]
   kind?: ArtKind
 }
 

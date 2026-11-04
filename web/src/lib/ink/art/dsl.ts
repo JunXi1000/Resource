@@ -3,9 +3,9 @@ import type { ArtDef, ArtKind, Part } from '@/lib/ink/art/types'
 export type P2 = [number, number]
 
 export interface Sub {
-  pts: Array<P2>
+  pts: P2[]
   closed: boolean
-  anchor: Array<boolean>
+  anchor: boolean[]
   shape: number
 }
 
@@ -18,17 +18,17 @@ const TAU = Math.PI * 2
 const TOKEN = /[MLlQCOEZ]|-?(?:\d+\.?\d*|\.\d+)(?:e-?\d+)?/g
 const CMD = /^[MLlQCOEZ]$/
 
-export function tokenize(d: string): { tok: Array<string>; bad: string } {
+export function tokenize(d: string): { tok: string[]; bad: string } {
   const tok = d.match(TOKEN) ?? []
   const bad = d.replace(TOKEN, '').replace(/[\s,]+/g, '')
   return { tok, bad }
 }
 
-export function parsePath(d: string, o: ParseOpts = {}): Array<Sub> {
+export function parsePath(d: string, o: ParseOpts = {}): Sub[] {
   const step = o.step ?? 0.6
   const rnd = o.rnd ?? (() => 0.5)
   const { tok } = tokenize(d)
-  const subs: Array<Sub> = []
+  const subs: Sub[] = []
   let cur: Sub | null = null
   let cx = 0, cy = 0, sx = 0, sy = 0, i = 0
   const num = (): number => Number.parseFloat(tok[i++])
@@ -122,7 +122,7 @@ export function parsePath(d: string, o: ParseOpts = {}): Array<Sub> {
   return subs
 }
 
-export function polygonsOf(d: string, o: ParseOpts = {}): Array<Array<P2>> {
+export function polygonsOf(d: string, o: ParseOpts = {}): P2[][] {
   return parsePath(d, { step: 0.5, ...o }).filter((s) => s.pts.length > 2).map((s) => s.pts.slice(0, s.shape))
 }
 
@@ -134,8 +134,8 @@ export interface Problem {
 }
 
 export interface PathCheck {
-  errors: Array<string>
-  warnings: Array<string>
+  errors: string[]
+  warnings: string[]
   bbox: [number, number, number, number] | null
   strokes: number
 }
@@ -143,8 +143,8 @@ export interface PathCheck {
 const nf = (s: string): number => Number.parseFloat(s)
 
 export function checkPath(d: string): PathCheck {
-  const errors: Array<string> = []
-  const warnings: Array<string> = []
+  const errors: string[] = []
+  const warnings: string[] = []
   if (typeof d !== 'string' || !d.trim()) return { errors: ['empty path'], warnings, bbox: null, strokes: 0 }
   const { tok, bad } = tokenize(d)
   if (bad) errors.push(`illegal characters "${bad.slice(0, 12)}" (grammar: M L l Q C O E Z, numbers)`)
@@ -296,15 +296,15 @@ function widthOf(p: Part): number | undefined {
 
 export type GlyphLookup = (font: string, ch: string) => boolean | undefined
 
-export function validateParts(parts: ReadonlyArray<Part>, kind: ArtKind, tier: string, hasAccent: boolean, glyph?: GlyphLookup): Array<Problem> {
-  const out: Array<Problem> = []
+export function validateParts(parts: readonly Part[], kind: ArtKind, tier: string, hasAccent: boolean, glyph?: GlyphLookup): Problem[] {
+  const out: Problem[] = []
   const area = USABLE[kind]
   const E = (code: string, msg: string, at: string): number => out.push({ level: 'error', code, msg, at })
   const W = (code: string, msg: string, at: string): number => out.push({ level: 'warn', code, msg, at })
   parts.forEach((p, idx) => {
     const at = `${tier}[${idx}]`
     if (!Array.isArray(p) || !PART_TAGS.has(p[0] as string)) return void E('part-shape', `unknown part ${JSON.stringify(p)?.slice(0, 40)}`, at)
-    const paths: Array<string> = []
+    const paths: string[] = []
     switch (p[0]) {
       case 'f':
         if (!isArtColour(p[1])) E('colour', `"${String(p[1])}" is not an allowed color (PaintKey, key~, acc, sil)`, at)
@@ -362,18 +362,18 @@ export function validateParts(parts: ReadonlyArray<Part>, kind: ArtKind, tier: s
   return out
 }
 
-export function validateArt(def: ArtDef, o: { id?: string; kind?: ArtKind; glyph?: GlyphLookup } = {}): Array<Problem> {
-  const out: Array<Problem> = []
+export function validateArt(def: ArtDef, o: { id?: string; kind?: ArtKind; glyph?: GlyphLookup } = {}): Problem[] {
+  const out: Problem[] = []
   const kind = o.kind ?? kindOfDef(def)
   const g = def.grid
   const okGrid = g === 24 || g === 64 || (Array.isArray(g) && g.length === 2 && g.every((v) => Number.isFinite(v) && v >= 8 && v <= 512))
   if (!okGrid) out.push({ level: 'error', code: 'grid', msg: `grid must be 24, 64 or [w, h] (got ${JSON.stringify(g)})` })
   if (!Array.isArray(def.parts) || !def.parts.length) out.push({ level: 'error', code: 'parts', msg: 'a definition needs at least one part' })
-  if (def.accent !== undefined && !([...ACCENT_KEYS, 'hi', 'kraft'] as Array<string>).includes(def.accent)) out.push({ level: 'error', code: 'accent', msg: `accent "${String(def.accent)}" is not a stationery accent, "hi" or "kraft"` })
+  if (def.accent !== undefined && !([...ACCENT_KEYS, 'hi', 'kraft'] as string[]).includes(def.accent)) out.push({ level: 'error', code: 'accent', msg: `accent "${String(def.accent)}" is not a stationery accent, "hi" or "kraft"` })
   if (def.nibK !== undefined && !(def.nibK >= 0.02 && def.nibK <= 0.14)) out.push({ level: 'error', code: 'nibK', msg: 'nibK must be 0.02..0.14' })
   if (def.tags !== undefined && (!Array.isArray(def.tags) || def.tags.some((t) => typeof t !== 'string' || !t))) out.push({ level: 'error', code: 'tags', msg: 'tags must be non-empty strings' })
   const b = BUDGET[kind as keyof typeof BUDGET]
-  const tiers: Array<['parts' | 'small' | 'micro' | 'hi', ReadonlyArray<Part> | undefined]> = [['parts', def.parts], ['small', def.small], ['micro', def.micro], ['hi', def.hi]]
+  const tiers: Array<['parts' | 'small' | 'micro' | 'hi', readonly Part[] | undefined]> = [['parts', def.parts], ['small', def.small], ['micro', def.micro], ['hi', def.hi]]
   for (const [name, list] of tiers) {
     if (!list) continue
     if (!Array.isArray(list)) {

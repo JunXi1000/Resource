@@ -1,8 +1,7 @@
 import * as React from "react"
 
-import type {TapeEnds, TapeKind} from "@/lib/ink/paper/props";
 import { dropShadow, tiltFor } from "@/lib/ink/paper/shadows"
-import {   tape } from "@/lib/ink/paper/props"
+import { tape, type TapeEnds, type TapeKind } from "@/lib/ink/paper/props"
 import { PropSvg } from "@/lib/ink/paper/prop-svg"
 import { useDensity, useInkSeed, useInkTier } from "@/lib/ink/react"
 import { cn } from "@/lib/utils"

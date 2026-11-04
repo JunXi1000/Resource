@@ -1,7 +1,7 @@
 import * as React from "react"
 
-import type { Frame } from "@/lib/ink/react/cache"
 import { inkViewBox } from "@/lib/ink/builder"
+import type { Frame } from "@/lib/ink/react/cache"
 
 export function InkSvg({ kind, frame, still, ref }: { kind: string; frame: Frame | null; still?: boolean; ref?: React.Ref<SVGSVGElement> }) {
   const pad = frame?.pad ?? 0

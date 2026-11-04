@@ -1,13 +1,13 @@
 export interface Rng {
   (): number
   readonly seed: number
-  range: (a: number, b: number) => number
-  int: (a: number, b: number) => number
-  chance: (p: number) => boolean
-  sign: () => 1 | -1
-  pick: <T>(arr: ReadonlyArray<T>) => T
-  gauss: (mean?: number, sd?: number) => number
-  fork: (name: string | number) => Rng
+  range(a: number, b: number): number
+  int(a: number, b: number): number
+  chance(p: number): boolean
+  sign(): 1 | -1
+  pick<T>(arr: readonly T[]): T
+  gauss(mean?: number, sd?: number): number
+  fork(name: string | number): Rng
 }
 
 const AVALANCHE = 0x9e3779b9

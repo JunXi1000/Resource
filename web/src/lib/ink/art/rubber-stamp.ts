@@ -1,12 +1,10 @@
-import type { PaintKey } from '@/lib/ink/paint'
-import type { Pt } from '@/lib/ink/types'
-import type { StampGen } from '@/lib/ink/art/types'
-import type {InkResult} from '@/lib/ink/builder';
-import type {Rng} from '@/lib/ink/rng';
-import { Ink  } from '@/lib/ink/builder'
+import { Ink, type InkResult } from '@/lib/ink/builder'
 import { area, densifyClosed, ellipsePoly, polyPath, roundRectPoly } from '@/lib/ink/geom'
-import {  clamp } from '@/lib/ink/rng'
+import type { PaintKey } from '@/lib/ink/paint'
+import { clamp, type Rng } from '@/lib/ink/rng'
+import type { Pt } from '@/lib/ink/types'
 import { measureText, textPath } from '@/lib/ink/art/glyph-text'
+import type { StampGen } from '@/lib/ink/art/types'
 
 export interface StampOpts extends Partial<Omit<StampGen, 'gen' | 'text' | 'shape' | 'kind'>> {
   seed?: string | number
@@ -15,16 +13,16 @@ export interface StampOpts extends Partial<Omit<StampGen, 'gen' | 'text' | 'shap
 
 const INK: Record<NonNullable<StampGen['ink']>, PaintKey> = { red: 'red', 'ink-you': 'ink-you', green: 'green', ink: 'ink' }
 
-const flip = (pts: Array<Pt>): Array<Pt> => (area(pts) > 0 ? pts.slice().reverse() : pts)
+const flip = (pts: Pt[]): Pt[] => (area(pts) > 0 ? pts.slice().reverse() : pts)
 
-function ring(outer: Array<Pt>, inner: Array<Pt>): string {
+function ring(outer: Pt[], inner: Pt[]): string {
   const o = area(outer) < 0 ? outer.slice().reverse() : outer
   const i = area(inner) > 0 ? inner.slice().reverse() : inner
   return polyPath(o, 10) + polyPath(i, 10)
 }
 
-function star(cx: number, cy: number, ro: number, ri: number, rot = -90): Array<Pt> {
-  const p: Array<Pt> = []
+function star(cx: number, cy: number, ro: number, ri: number, rot = -90): Pt[] {
+  const p: Pt[] = []
   for (let i = 0; i < 10; i++) {
     const a = ((rot + i * 36) * Math.PI) / 180
     const r = i % 2 ? ri : ro
@@ -33,7 +31,7 @@ function star(cx: number, cy: number, ro: number, ri: number, rot = -90): Array<
   return p
 }
 
-function dashes(poly: Array<Pt>, len: number, gap: number, w: number, rng: Rng): string {
+function dashes(poly: Pt[], len: number, gap: number, w: number, rng: Rng): string {
   let d = ''
   const m = poly.length
   let carry = 0
@@ -63,7 +61,7 @@ function dashes(poly: Array<Pt>, len: number, gap: number, w: number, rng: Rng):
   return d
 }
 
-function cleanRect(x: number, y: number, w: number, h: number, r: number): Array<Pt> {
+function cleanRect(x: number, y: number, w: number, h: number, r: number): Pt[] {
   return densifyClosed(roundRectPoly(x, y, w, h, r, 5), 5)
 }
 
@@ -109,7 +107,7 @@ export function stamp(text: string, shape: StampGen['shape'], o: StampOpts = {})
     } else if (shape === 'round' || shape === 'burst') {
       const R = W / 2
       if (shape === 'burst') {
-        const pts: Array<Pt> = []
+        const pts: Pt[] = []
         for (let i = 0; i < 24; i++) {
           const a = (i / 24) * Math.PI * 2 - Math.PI / 2
           const rr = i % 2 ? R * 0.82 : R - 1

@@ -1,13 +1,11 @@
 import type { BBox, GrainKind, LayerName, Line, Material, PenName, PenSpec, Pt, StrokeOpts, StrokeResult, Tier } from '@/lib/ink/types'
-import type {PaintKey} from '@/lib/ink/paint';
-import type {Rng} from '@/lib/ink/rng';
-import { BLEND,  esc, n, paint } from '@/lib/ink/paint'
-import {  hashSeed, makeRng } from '@/lib/ink/rng'
+import { BLEND, esc, n, paint, type PaintKey } from '@/lib/ink/paint'
+import { hashSeed, makeRng, type Rng } from '@/lib/ink/rng'
 import { TIERS, smoothClosed } from '@/lib/ink/geom'
 import { dot as penDot, stroke as penStroke } from '@/lib/ink/pen'
 import { pen as resolvePen } from '@/lib/ink/pens'
 
-export const GRAINS: ReadonlyArray<GrainKind> = ['felt', 'marker', 'graphite', 'waxy', 'stamp']
+export const GRAINS: readonly GrainKind[] = ['felt', 'marker', 'graphite', 'waxy', 'stamp']
 
 export const MASK_VARIANTS = 6
 
@@ -15,7 +13,7 @@ export function maskId(grain: GrainKind, variant: number): string {
   return `ll-${grain}-${((variant % MASK_VARIANTS) + MASK_VARIANTS) % MASK_VARIANTS}`
 }
 
-export const MASK_IDS: ReadonlyArray<string> = GRAINS.flatMap((g) => Array.from({ length: MASK_VARIANTS }, (_, v) => maskId(g, v)))
+export const MASK_IDS: readonly string[] = GRAINS.flatMap((g) => Array.from({ length: MASK_VARIANTS }, (_, v) => maskId(g, v)))
 
 export function maskPhase(variant: number): { x: number; y: number; rot: 0 | 90 | 180 | 270 } {
   const v = ((variant % MASK_VARIANTS) + MASK_VARIANTS) % MASK_VARIANTS
@@ -53,7 +51,7 @@ export interface InkResult {
   w: number
   h: number
   pad: number
-  layers: Array<LayerName>
+  layers: LayerName[]
   parts: Partial<Record<LayerName, string>>
   bbox: BBox
 }
@@ -70,7 +68,7 @@ interface PathItem {
 type Item = PathItem | { raw: string } | { scope: Scope }
 
 class Scope {
-  buckets: Partial<Record<Material, Array<Item>>> = {}
+  buckets: Partial<Record<Material, Item[]>> = {}
   readonly attrs?: GroupAttrs
   constructor(attrs?: GroupAttrs) {
     this.attrs = attrs
@@ -80,15 +78,15 @@ class Scope {
   }
 }
 
-const ORDER: ReadonlyArray<Material> = ['under', 'wash', 'hl', 'marker', 'pencil', 'waxy', 'text', 'felt', 'stamp', 'top']
+const ORDER: readonly Material[] = ['under', 'wash', 'hl', 'marker', 'pencil', 'waxy', 'text', 'felt', 'stamp', 'top']
 const GRAIN_OF: Partial<Record<Material, GrainKind>> = { marker: 'marker', pencil: 'graphite', waxy: 'waxy', text: 'felt', felt: 'felt', stamp: 'stamp' }
 const BLENDED: ReadonlySet<Material> = new Set(['hl', 'marker'])
 const SUBTLE: ReadonlySet<GrainKind> = new Set(['marker', 'felt'])
 
 type Piece =
   | { t: 'raw'; s: string }
-  | { t: 'mat'; grain?: GrainKind; blend: boolean; kids: Array<Piece> }
-  | { t: 'grp'; pre: string; open: string; kids: Array<Piece>; plain: boolean }
+  | { t: 'mat'; grain?: GrainKind; blend: boolean; kids: Piece[] }
+  | { t: 'grp'; pre: string; open: string; kids: Piece[]; plain: boolean }
 
 const mergeOpts = (a: StrokeOpts | undefined, b: StrokeOpts | undefined): StrokeOpts => {
   if (!a) return b ?? {}
@@ -206,7 +204,7 @@ export class Ink {
     this.cur.add(at, { raw: `<use href="#${id}"${xy}${o.transform ? ` transform="${o.transform}"` : ''}/>` })
   }
 
-  stroke(pts: Array<Pt>, penIn: PenName | PenSpec = 'ink', o: StrokeOpts = {}): StrokeResult {
+  stroke(pts: Pt[], penIn: PenName | PenSpec = 'ink', o: StrokeOpts = {}): StrokeResult {
     let P = resolvePen(penIn)
     if (this.knobs.bleed !== 1) P = { ...P, bleed: P.bleed * this.knobs.bleed }
     const r = this.next('s')
@@ -217,7 +215,7 @@ export class Ink {
     return this.put(res, P)
   }
 
-  lines(lines: Array<Line>, penIn: PenName | PenSpec = 'ink', o?: StrokeOpts): void {
+  lines(lines: Line[], penIn: PenName | PenSpec = 'ink', o?: StrokeOpts): void {
     for (const l of lines) this.stroke(l.pts, l.pen ?? penIn, mergeOpts(l.o, o))
   }
 
@@ -246,7 +244,7 @@ export class Ink {
     if (extra.bbox) this.grow(extra.bbox)
   }
 
-  poly(material: Material, pts: Array<Pt>, fill: PaintKey, op = 1): void {
+  poly(material: Material, pts: Pt[], fill: PaintKey, op = 1): void {
     if (pts.length < 3) return
     let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity
     for (const p of pts) {
@@ -268,7 +266,7 @@ export class Ink {
     this.raw(`<text ${attrs}>${esc(s)}</text>`, 'text')
   }
 
-  private itemNodes(items: Array<Item>): Array<Piece> {
+  private itemNodes(items: Item[]): Piece[] {
     const q = this.tier === 'lo' ? 50 : 100
     const merged = new Map<string, PathItem>()
     const seq: Array<PathItem | Piece> = []
@@ -291,7 +289,7 @@ export class Ink {
         }
       }
     }
-    const out: Array<Piece> = []
+    const out: Piece[] = []
     for (const it of seq) {
       if ('t' in it) {
         out.push(it)
@@ -308,8 +306,8 @@ export class Ink {
     return out
   }
 
-  private scopeNodes(scope: Scope): Array<Piece> {
-    const out: Array<Piece> = []
+  private scopeNodes(scope: Scope): Piece[] {
+    const out: Piece[] = []
     for (const mat of ORDER) {
       const items = scope.buckets[mat]
       if (!items || !items.length) continue
@@ -351,7 +349,7 @@ export class Ink {
     return nd.t === 'grp' && nd.plain && !nd.pre && nd.kids.length > 0 && nd.kids.every((k) => Ink.subtle(k) || Ink.pure(k))
   }
 
-  private static bare(nd: Piece): Array<Piece> {
+  private static bare(nd: Piece): Piece[] {
     if (nd.t === 'mat') return nd.kids
     if (nd.t === 'grp') return [{ ...nd, kids: nd.kids.flatMap((k) => Ink.bare(k)) }]
     return [nd]
@@ -362,9 +360,9 @@ export class Ink {
     else if (nd.t === 'grp') for (const k of nd.kids) Ink.grainsIn(k, into)
   }
 
-  private leanMerge(nodes: Array<Piece>): Array<Piece> {
-    const out: Array<Piece> = []
-    let run: Array<Piece> = []
+  private leanMerge(nodes: Piece[]): Piece[] {
+    const out: Piece[] = []
+    let run: Piece[] = []
     const flush = (): void => {
       if (run.length < 2) {
         out.push(...run)
@@ -387,8 +385,8 @@ export class Ink {
     return out
   }
 
-  private static join(nodes: Array<Piece>): Array<Piece> {
-    const out: Array<Piece> = []
+  private static join(nodes: Piece[]): Piece[] {
+    const out: Piece[] = []
     for (const nd of nodes) {
       const last = out[out.length - 1]
       if (nd.t === 'mat' && last && last.t === 'mat' && last.grain === nd.grain && last.blend === nd.blend) last.kids = [...last.kids, ...nd.kids]
@@ -397,7 +395,7 @@ export class Ink {
     return out.map((nd) => (nd.t === 'grp' ? { ...nd, kids: Ink.join(nd.kids) } : nd))
   }
 
-  private print(nodes: Array<Piece>): string {
+  private print(nodes: Piece[]): string {
     let out = ''
     for (const nd of nodes) {
       if (nd.t === 'raw') out += nd.s
@@ -417,7 +415,7 @@ export class Ink {
     return this.print(Ink.join(nodes))
   }
 
-  toSvg(o: { w: number; h: number; pad?: number; layers?: Array<LayerName> }): InkResult {
+  toSvg(o: { w: number; h: number; pad?: number; layers?: LayerName[] }): InkResult {
     const names = [...this.roots.keys()].filter((k) => !o.layers || o.layers.includes(k))
     const parts: Partial<Record<LayerName, string>> = {}
     for (const name of names) parts[name] = this.emitScope(this.roots.get(name) as Scope)

@@ -1,9 +1,8 @@
-import type { Tier } from '@/lib/ink/types'
-import type {InkResult} from '@/lib/ink/builder';
-import { Ink  } from '@/lib/ink/builder'
+import { Ink, type InkResult } from '@/lib/ink/builder'
 import { highlight } from '@/lib/ink/fills'
 import { arrow, cross, focusRing } from '@/lib/ink/shapes'
 import { defineRecipe } from '@/lib/ink/recipes'
+import type { Tier } from '@/lib/ink/types'
 
 export interface CloseMarkParams {
   tone?: 'ink' | 'red'

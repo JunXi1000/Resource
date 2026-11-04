@@ -1,23 +1,17 @@
-import type { BBox, Pt, Tier } from '@/lib/ink/types'
-import type {InkResult, Knobs} from '@/lib/ink/builder';
-import type {PaintKey} from '@/lib/ink/paint';
-import type {Rng} from '@/lib/ink/rng';
-import type {Sub} from '@/lib/ink/art/dsl';
-import type {ArtAccent, ArtColour, ArtDef, ArtKind, Hand, Part, StickerDef} from '@/lib/ink/art/types';
-import { Ink   } from '@/lib/ink/builder'
+import { Ink, type InkResult, type Knobs } from '@/lib/ink/builder'
 import { flatFill } from '@/lib/ink/fills'
 import { PathWriter, TIERS, smoothClosed } from '@/lib/ink/geom'
 import { noise1 } from '@/lib/ink/noise'
-import {  n } from '@/lib/ink/paint'
+import { n, type PaintKey } from '@/lib/ink/paint'
 import { pen as penSpec } from '@/lib/ink/pens'
-import {  clamp, hashSeed } from '@/lib/ink/rng'
-import {  kindOfDef, parsePath, polygonsOf } from '@/lib/ink/art/dsl'
+import { clamp, hashSeed, type Rng } from '@/lib/ink/rng'
+import type { BBox, Pt, Tier } from '@/lib/ink/types'
+import { parsePath, polygonsOf, kindOfDef, type Sub } from '@/lib/ink/art/dsl'
 import { capHeight, textPath } from '@/lib/ink/art/glyph-text'
-import {        isGen } from '@/lib/ink/art/types'
+import { isGen, type ArtAccent, type ArtColour, type ArtDef, type ArtKind, type Hand, type Part, type StickerDef } from '@/lib/ink/art/types'
 
 import { badgeSkeleton } from '@/lib/ink/art/badge-gen'
 import { stamp } from '@/lib/ink/art/rubber-stamp'
-
 export { badgeSkeleton }
 export type { BadgeOpts } from '@/lib/ink/art/badge-gen'
 export { stamp }
@@ -42,7 +36,7 @@ export function variantFor(kind: ArtKind, size: number): Variant {
   }
 }
 
-export function partsFor(def: ArtDef, variant: Variant): ReadonlyArray<Part> {
+export function partsFor(def: ArtDef, variant: Variant): readonly Part[] {
   if (variant === 'micro') return def.micro ?? def.small ?? def.parts
   if (variant === 'small') return def.small ?? def.parts
   if (variant === 'hi' && def.hi) return [...def.parts, ...def.hi]
@@ -76,9 +70,9 @@ export interface DrawOpts {
 }
 
 export interface Silhouette {
-  fills: Array<string>
-  lines: Array<string>
-  pts: Array<Pt>
+  fills: string[]
+  lines: string[]
+  pts: Pt[]
   W: number
 }
 
@@ -90,7 +84,7 @@ export interface SkeletonResult extends InkResult {
   silhouette: Silhouette
 }
 
-function wander(pts: Array<Pt>, rng: Rng, k: number, amp: number): Array<Pt> {
+function wander(pts: Pt[], rng: Rng, k: number, amp: number): Pt[] {
   let L = 20
   for (let i = 1; i < pts.length; i++) L += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]) * k
   const nx = noise1(rng.fork('x'), L, 7 * k), ny = noise1(rng.fork('y'), L, 7 * k)
@@ -102,9 +96,9 @@ function wander(pts: Array<Pt>, rng: Rng, k: number, amp: number): Array<Pt> {
   })
 }
 
-function roundCorners(pts: Array<Pt>, anchor: Array<boolean>, r: number): Array<Pt> {
+function roundCorners(pts: Pt[], anchor: boolean[], r: number): Pt[] {
   if (pts.length < 3 || r < 0.2) return pts
-  const out: Array<Pt> = [pts[0]]
+  const out: Pt[] = [pts[0]]
   for (let i = 1; i < pts.length - 1; i++) {
     const a = pts[i - 1], b = pts[i], c = pts[i + 1]
     if (!anchor[i]) {
@@ -133,7 +127,7 @@ function roundCorners(pts: Array<Pt>, anchor: Array<boolean>, r: number): Array<
   return out
 }
 
-const openPath = (pts: Array<Pt>): string => {
+const openPath = (pts: Pt[]): string => {
   const w = new PathWriter(10)
   pts.forEach((p, i) => (i ? w.L(p[0], p[1]) : w.M(p[0], p[1])))
   return w.d
@@ -163,11 +157,11 @@ export function paintSkeleton(ink: Ink, def: ArtDef, size: number, o: DrawOpts =
   const sil: Silhouette = { fills: [], lines: [], pts: [], W: nib }
   const seenFills = new Set<string>()
   let lastFill = ''
-  const off = (ps: Array<Pt>): Array<Pt> => (origin[0] || origin[1] ? ps.map(([x, y]) => [x + origin[0], y + origin[1]] as Pt) : ps)
+  const off = (ps: Pt[]): Pt[] => (origin[0] || origin[1] ? ps.map(([x, y]) => [x + origin[0], y + origin[1]] as Pt) : ps)
   const tc = Math.cos(((def.tilt ?? 0) * Math.PI) / 180), ts = Math.sin(((def.tilt ?? 0) * Math.PI) / 180)
   const turn = def.tilt
-    ? (ps: Array<Pt>): Array<Pt> => ps.map(([x, y]) => [gw / 2 + (x - gw / 2) * tc - (y - gh) * ts, gh + (x - gw / 2) * ts + (y - gh) * tc] as Pt)
-    : (ps: Array<Pt>): Array<Pt> => ps
+    ? (ps: Pt[]): Pt[] => ps.map(([x, y]) => [gw / 2 + (x - gw / 2) * tc - (y - gh) * ts, gh + (x - gw / 2) * ts + (y - gh) * tc] as Pt)
+    : (ps: Pt[]): Pt[] => ps
   const fillAlpha = sticker ? 1 : icon ? 0.9 : 0.95
   const fillMaterial = sticker ? 'wash' : 'marker'
   const cornerR = nib * 0.55
@@ -251,7 +245,7 @@ export function paintSkeleton(ink: Ink, def: ArtDef, size: number, o: DrawOpts =
   return { silhouette: sil, variant, kind, nib, k, w: gw * k, h: gh * k }
 }
 
-function smoothPath(px: Array<Pt>): string {
+function smoothPath(px: Pt[]): string {
   return smoothClosed(px, TIERS.lo)
 }
 

@@ -1,14 +1,12 @@
-import type { Rng } from '@/lib/ink/rng'
-import type { Pt } from '@/lib/ink/types'
-import type {SheetShadowKind} from '@/lib/ink/paper/shadows';
-import type {StockName} from '@/lib/ink/paper/stocks';
 import { n } from '@/lib/ink/paint'
 import { highlight } from '@/lib/ink/fills'
 import { underline } from '@/lib/ink/shapes'
 import { defineRecipe } from '@/lib/ink/recipes'
 import { faceMark } from '@/lib/ink/paper/faces'
-import {  contactShadow, farShadow } from '@/lib/ink/paper/shadows'
-import {  stockOf } from '@/lib/ink/paper/stocks'
+import { contactShadow, farShadow, type SheetShadowKind } from '@/lib/ink/paper/shadows'
+import { stockOf, type StockName } from '@/lib/ink/paper/stocks'
+import type { Rng } from '@/lib/ink/rng'
+import type { Pt } from '@/lib/ink/types'
 
 export const tok = (name: string) => `var(--ll-${name})`
 export const num = (v: number) => n(v, 10)
@@ -33,7 +31,7 @@ export function pathTag(d: string, a: PathAttrs): string {
   return s + '/>'
 }
 
-export const polyD = (pts: ReadonlyArray<Pt>, close = false) => 'M' + pts.map((p) => `${num(p[0])} ${num(p[1])}`).join('L') + (close ? 'Z' : '')
+export const polyD = (pts: readonly Pt[], close = false) => 'M' + pts.map((p) => `${num(p[0])} ${num(p[1])}`).join('L') + (close ? 'Z' : '')
 
 export const circleD = (cx: number, cy: number, r: number) =>
   `M${num(cx - r)} ${num(cy)}a${num(r)} ${num(r)} 0 1 0 ${num(2 * r)} 0a${num(r)} ${num(r)} 0 1 0 ${num(-2 * r)} 0z`

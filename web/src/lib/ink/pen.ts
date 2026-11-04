@@ -1,10 +1,8 @@
-import type { BBox, PenName, PenSpec, Pt, RibbonLayer, StrokeOpts, StrokeResult } from '@/lib/ink/types'
+import type { BBox, Pt, PenName, PenSpec, RibbonLayer, StrokeOpts, StrokeResult } from '@/lib/ink/types'
 import type { PaintKey } from '@/lib/ink/paint'
-import type {Rng} from '@/lib/ink/rng';
-import type {TierCfg} from '@/lib/ink/geom';
-import {  clamp, smooth } from '@/lib/ink/rng'
+import { clamp, smooth, type Rng } from '@/lib/ink/rng'
 import { noise1 } from '@/lib/ink/noise'
-import { PathWriter, TAU, TIERS,  densify, fillet, resample, smoothClosed, spline } from '@/lib/ink/geom'
+import { PathWriter, TAU, TIERS, densify, fillet, resample, smoothClosed, spline, type TierCfg } from '@/lib/ink/geom'
 import { pen as resolvePen } from '@/lib/ink/pens'
 
 const wrap = (a: number): number => (a > Math.PI ? a - TAU : a < -Math.PI ? a + TAU : a)
@@ -22,14 +20,14 @@ class Sink {
     if (y < b[1]) b[1] = y
     if (y > b[3]) b[3] = y
   }
-  poly(pts: Array<Pt>): string {
+  poly(pts: Pt[]): string {
     for (const p of pts) this.grow(p[0], p[1])
     return smoothClosed(pts, this.cfg)
   }
 }
 
-export function blobPts(cx: number, cy: number, r: number, jag: number, rnd: () => number, nv = 10, sx = 1, sy = 1, rot = 0): Array<Pt> {
-  const pts: Array<Pt> = []
+export function blobPts(cx: number, cy: number, r: number, jag: number, rnd: () => number, nv = 10, sx = 1, sy = 1, rot = 0): Pt[] {
+  const pts: Pt[] = []
   const a0 = rnd() * TAU
   for (let i = 0; i < nv; i++) {
     const a = a0 + (i / nv) * TAU
@@ -52,9 +50,9 @@ interface Geo {
   capN: number
 }
 
-function ribbon(g: Geo, lo: Float64Array, ro: Float64Array, a: number, b: number, capS = true, capE = true): Array<Pt> {
+function ribbon(g: Geo, lo: Float64Array, ro: Float64Array, a: number, b: number, capS = true, capE = true): Pt[] {
   const { X, Y, NX, NY, TX, TY, capN } = g
-  const pts: Array<Pt> = []
+  const pts: Pt[] = []
   for (let i = a; i <= b; i++) pts.push([X[i] + NX[i] * lo[i], Y[i] + NY[i] * lo[i]])
   if (capE) {
     const r = (lo[b] + ro[b]) / 2
@@ -89,7 +87,7 @@ function clampInner(g: Geo, lo: Float64Array, ro: Float64Array): void {
   }
 }
 
-function prepare(pts: Array<Pt>, P: PenSpec, rng: Rng, o: StrokeOpts, cfg: TierCfg): Geo {
+function prepare(pts: Pt[], P: PenSpec, rng: Rng, o: StrokeOpts, cfg: TierCfg): Geo {
   let raw = 0
   for (let i = 1; i < pts.length; i++) raw += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1])
   const step0 = Math.max(P.step * cfg.stepK * (o.simple ? 1.8 : 1), raw / 6000)
@@ -173,14 +171,14 @@ function runs(cut: Uint8Array | null, N: number): Array<[number, number]> {
   return out
 }
 
-function lineStroke(pts: Array<Pt>, P: PenSpec, rng: Rng, o: StrokeOpts, cfg: TierCfg, lo: boolean): StrokeResult {
+function lineStroke(pts: Pt[], P: PenSpec, rng: Rng, o: StrokeOpts, cfg: TierCfg, lo: boolean): StrokeResult {
   const g = prepare(pts, P, rng, o, cfg)
   const { X, Y, S, L, N, V, turn } = g
   const sink = new Sink(o.simple ? { ...cfg, tol: cfg.tol * 2.2 } : cfg)
   const felt = P.kind === 'felt'
   const W = P.W * (o.width ?? 1)
   const alpha = (o.alpha ?? 1) * P.alpha
-  const layers: Array<RibbonLayer> = []
+  const layers: RibbonLayer[] = []
   const rl = rng.fork('layers')
   const hw = new Float64Array(N)
   const taper = Math.min(L * 0.35, (2.5 + 3.5 * W) * P.taper)
@@ -329,7 +327,7 @@ function lineStroke(pts: Array<Pt>, P: PenSpec, rng: Rng, o: StrokeOpts, cfg: Ti
   return { kind: P.kind, layers, bbox: sink.bb, len: L, end: [X[N - 1], Y[N - 1]], start: [X[0], Y[0]] }
 }
 
-function markerStroke(pts: Array<Pt>, P: PenSpec, rng: Rng, o: StrokeOpts, cfg: TierCfg, lo: boolean): StrokeResult {
+function markerStroke(pts: Pt[], P: PenSpec, rng: Rng, o: StrokeOpts, cfg: TierCfg, lo: boolean): StrokeResult {
   const g = prepare(pts, P, rng, { ...o, start: o.start ?? 'pool' }, cfg)
   const { X, Y, S, L, N } = g
   const sink = new Sink(cfg)
@@ -365,7 +363,7 @@ function markerStroke(pts: Array<Pt>, P: PenSpec, rng: Rng, o: StrokeOpts, cfg: 
     lo_[i] = a
     ro_[i] = b
   }
-  const layers: Array<RibbonLayer> = []
+  const layers: RibbonLayer[] = []
   const lane = (l2: (i: number) => number, r2: (i: number) => number): string => {
     const a = new Float64Array(N), b = new Float64Array(N)
     for (let i = 0; i < N; i++) {
@@ -380,7 +378,7 @@ function markerStroke(pts: Array<Pt>, P: PenSpec, rng: Rng, o: StrokeOpts, cfg: 
   const rw1 = hl ? 0.55 : 0.8
   const rim = lane((i) => lo_[i], (i) => -lo_[i] + rw1 * (0.6 + 0.8 * rl())) + lane((i) => -ro_[i] + rw1 * (0.6 + 0.8 * rl()), (i) => ro_[i])
   let rule: 'evenodd' | undefined
-  const extra: Array<RibbonLayer> = []
+  const extra: RibbonLayer[] = []
   if (!hl && !lo && L > 6) {
     const nS = noise1(rl, L, 30)
     for (let s = 0; s < 2; s++) {
@@ -398,7 +396,7 @@ function markerStroke(pts: Array<Pt>, P: PenSpec, rng: Rng, o: StrokeOpts, cfg: 
         inSlit = false
         if (i - sIdx > 4) {
           const off = hwA[sIdx] * (rl() - 0.5) * 0.7
-          const top: Array<Pt> = [], bot: Array<Pt> = []
+          const top: Pt[] = [], bot: Pt[] = []
           for (let j = sIdx; j < i; j++) {
             const tt = (j - sIdx) / (i - sIdx)
             const wdt = 0.28 * Math.sin(Math.PI * tt)
@@ -420,7 +418,7 @@ function markerStroke(pts: Array<Pt>, P: PenSpec, rng: Rng, o: StrokeOpts, cfg: 
   return { kind: P.kind, layers, bbox: sink.bb, len: L, end: [X[N - 1], Y[N - 1]], start: [X[0], Y[0]] }
 }
 
-export function stroke(pointsIn: Array<Pt>, penIn: PenName | PenSpec, rng: Rng, o: StrokeOpts = {}): StrokeResult {
+export function stroke(pointsIn: Pt[], penIn: PenName | PenSpec, rng: Rng, o: StrokeOpts = {}): StrokeResult {
   const P = resolvePen(penIn)
   const tier = o.tier ?? 'lo'
   const cfg = TIERS[tier]
@@ -437,7 +435,7 @@ export function dot(cx: number, cy: number, r: number, penIn: PenName | PenSpec,
   const sink = new Sink(cfg)
   const rl = rng.fork('dot')
   const color: PaintKey = o.color ?? P.color
-  const layers: Array<RibbonLayer> = []
+  const layers: RibbonLayer[] = []
   const rr = r * (o.width ?? 1)
   if (P.kind === 'felt') {
     if (P.halo > 0 && tier === 'hi') layers.push({ k: 'halo', d: sink.poly(blobPts(cx, cy, rr + P.bleed * 1.4, 0.2, rl, 12)), fill: color, op: P.halo * 0.9 })

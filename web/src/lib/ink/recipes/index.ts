@@ -1,6 +1,5 @@
+import { Ink, type InkOptions, type Knobs } from '@/lib/ink/builder'
 import type { LayerName, Tier } from '@/lib/ink/types'
-import type {InkOptions, Knobs} from '@/lib/ink/builder';
-import { Ink   } from '@/lib/ink/builder'
 
 export type InkLayerName = LayerName | 'indeterminate' | 'open' | 'busy'
 export type Density = 'comfortable' | 'compact' | 'calm'
@@ -11,11 +10,11 @@ export interface Box {
   h: number
 }
 
-export const INK_LAYER_ORDER: ReadonlyArray<InkLayerName> = [
+export const INK_LAYER_ORDER: readonly InkLayerName[] = [
   'rest', 'disabled', 'invalid', 'checked', 'indeterminate', 'open', 'busy', 'hover', 'pressed', 'focus',
 ]
 
-export function orderLayers<T extends string>(names: ReadonlyArray<T>): Array<T> {
+export function orderLayers<T extends string>(names: readonly T[]): T[] {
   const rank = (k: string) => {
     const i = INK_LAYER_ORDER.indexOf(k as InkLayerName)
     return i < 0 ? INK_LAYER_ORDER.length : i
@@ -30,22 +29,22 @@ export interface RecipeContext {
   readonly knobs: Knobs
   readonly dir: Dir
   readonly seed: string
-  wants: (layer: InkLayerName) => boolean
-  lazy: (layer: InkLayerName, fn: (ink: Ink) => void) => void
+  wants(layer: InkLayerName): boolean
+  lazy(layer: InkLayerName, fn: (ink: Ink) => void): void
   readonly lazyOnly: boolean
 }
 
 export interface RecipeDef<P> {
   id: string
   kind?: string
-  layers: ReadonlyArray<InkLayerName>
-  lazy?: ReadonlyArray<InkLayerName>
+  layers: readonly InkLayerName[]
+  lazy?: readonly InkLayerName[]
   pad: number | ((box: Box, params: P, ctx: RecipeContext) => number)
-  draw: (ink: Ink, box: Box, params: P, ctx: RecipeContext) => void
+  draw(ink: Ink, box: Box, params: P, ctx: RecipeContext): void
 }
 
 export interface Recipe<P = unknown> extends RecipeDef<P> {
-  readonly lazy: ReadonlyArray<InkLayerName>
+  readonly lazy: readonly InkLayerName[]
   readonly kind: string
   readonly isInkRecipe: true
   readonly rev: number
@@ -67,7 +66,7 @@ export function getRecipe(id: string): Recipe<never> | undefined {
   return registry.get(id)
 }
 
-export function allRecipes(): Array<Recipe<never>> {
+export function allRecipes(): Recipe<never>[] {
   return [...registry.values()]
 }
 
@@ -88,14 +87,14 @@ export interface RunRequest<P> {
   dir: Dir
   knobs: Knobs
   pad?: number
-  lazy?: ReadonlyArray<InkLayerName>
+  lazy?: readonly InkLayerName[]
   lazyOnly?: boolean
 }
 
 export interface RawFrame {
   parts: Partial<Record<InkLayerName, string>>
-  layers: Array<InkLayerName>
-  lazyLayers: Array<InkLayerName>
+  layers: InkLayerName[]
+  lazyLayers: InkLayerName[]
   pad: number
   w: number
   h: number
@@ -136,14 +135,14 @@ export function runRecipe<P>(recipe: Recipe<P>, req: RunRequest<P>): RawFrame {
       if (markup) parts[k as InkLayerName] = markup
     }
   }
-  const lazyLayers: Array<InkLayerName> = []
-  for (const k of Object.keys(lazyParts) as Array<InkLayerName>) {
+  const lazyLayers: InkLayerName[] = []
+  for (const k of Object.keys(lazyParts) as InkLayerName[]) {
     if (lazyParts[k]) {
       parts[k] = lazyParts[k]
       lazyLayers.push(k)
     }
   }
-  return { parts, layers: orderLayers(Object.keys(parts) as Array<InkLayerName>), lazyLayers: orderLayers(lazyLayers), pad, w: box.w, h: box.h }
+  return { parts, layers: orderLayers(Object.keys(parts) as InkLayerName[]), lazyLayers: orderLayers(lazyLayers), pad, w: box.w, h: box.h }
 }
 
 let warnedFn = false

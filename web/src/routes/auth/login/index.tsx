@@ -79,7 +79,7 @@ function Login() {
 
   return (
     <div className="m-6 flex h-full items-center justify-center">
-      <Card className="mx-auto w-full max-w-md">
+      <Card className="mx-auto w-full max-w-md" stock="slip" tape="both">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 h-12 w-12 rounded-full bg-info/10 p-3">
             <LogIn className="h-6 w-6 text-info" />

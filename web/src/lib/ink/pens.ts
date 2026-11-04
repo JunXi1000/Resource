@@ -53,12 +53,12 @@ function withClass(p: PenSpec, cls: 'fine' | 'brush'): PenSpec {
     : { ...p, cls, W: p.W * 1.9, alpha: p.alpha * 0.88, smear: p.smear * 1.4, dir: 0.14, dryAmt: 0.25, step: 1.6 }
 }
 
-const ACCENTS: ReadonlyArray<Accent> = ['tomato', 'tangerine', 'lemon', 'grass', 'teal', 'sky', 'grape', 'bubblegum']
+const ACCENTS: readonly Accent[] = ['tomato', 'tangerine', 'lemon', 'grass', 'teal', 'sky', 'grape', 'bubblegum']
 
 function build(): Record<PenName, PenSpec> {
   const out = {} as Record<PenName, PenSpec>
   const base: Record<BasePenName, PenSpec> = { ...FELTS, ...PENCILS }
-  for (const k of Object.keys(base) as Array<BasePenName>) {
+  for (const k of Object.keys(base) as BasePenName[]) {
     out[k] = base[k]
     out[`${k}.fine`] = withClass(base[k], 'fine')
     out[`${k}.brush`] = withClass(base[k], 'brush')

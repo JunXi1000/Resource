@@ -78,7 +78,7 @@ export interface RibbonLayer {
 
 export interface StrokeResult {
   kind: PenKind
-  layers: Array<RibbonLayer>
+  layers: RibbonLayer[]
   bbox: BBox
   len: number
   start: Pt
@@ -86,7 +86,7 @@ export interface StrokeResult {
 }
 
 export interface Line {
-  pts: Array<Pt>
+  pts: Pt[]
   o?: StrokeOpts
   pen?: PenName
 }

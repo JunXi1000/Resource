@@ -1,18 +1,16 @@
 import * as React from "react"
 
-import type { InkLayerName } from "@/lib/ink/recipes"
-import type {FaceSpec} from "@/lib/ink/paper/faces";
-import type {Frame, UseInkOptions} from "@/lib/ink/react";
 import { inkViewBox } from "@/lib/ink/builder"
-import {  faceClip, faceLook, hasFace, splitFaces, tilesOf } from "@/lib/ink/paper/faces"
+import { faceClip, faceLook, hasFace, splitFaces, tilesOf, type FaceSpec } from "@/lib/ink/paper/faces"
 import { farShadow } from "@/lib/ink/paper/shadows"
-import {  InkSvg, InkTiles,  useInkCore } from "@/lib/ink/react"
+import { InkSvg, InkTiles, useInkCore, type Frame, type UseInkOptions } from "@/lib/ink/react"
+import type { InkLayerName } from "@/lib/ink/recipes"
 
 type Piece = { type: "svg"; groups: Array<[layer: InkLayerName, markup: string]> } | { type: "face"; spec: FaceSpec; layer: InkLayerName }
 
-function piecesOf(frame: Frame): { pieces: Array<Piece>; casts: Array<FaceSpec> } {
-  const out: Array<Piece> = []
-  const casts: Array<FaceSpec> = []
+function piecesOf(frame: Frame): { pieces: Piece[]; casts: FaceSpec[] } {
+  const out: Piece[] = []
+  const casts: FaceSpec[] = []
   let cur: Extract<Piece, { type: "svg" }> | null = null
   for (const layer of frame.layers) {
     for (const part of splitFaces(frame.parts[layer] ?? "")) {

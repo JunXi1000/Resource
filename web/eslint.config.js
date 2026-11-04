@@ -25,14 +25,23 @@ export default [
   {
     // Vendored code (shadcn ui components + Looseleaf ink engine) follows
     // upstream style; keep diffs minimal against upstream sources.
-    files: ["src/components/ui/**", "src/lib/ink/**", "src/lib/field-class.ts"],
+    files: [
+      "src/components/ui/**",
+      "src/lib/ink/**",
+      "src/lib/field-class.ts",
+      "src/hooks/use-mark-ink.tsx",
+      "src/hooks/use-paper-object.ts",
+    ],
     rules: {
       "@typescript-eslint/naming-convention": "off",
       "@typescript-eslint/array-type": "off",
       "@typescript-eslint/no-unnecessary-condition": "off",
+      "@typescript-eslint/method-signature-style": "off",
       "sort-imports": "off",
       "import/consistent-type-specifier-style": "off",
       "import/order": "off",
+      "import/no-duplicates": "off",
+      "jsx-a11y/heading-has-content": "off",
     },
   },
   {

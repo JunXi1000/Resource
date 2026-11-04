@@ -1,17 +1,14 @@
-import type { Ink, InkResult  } from '@/lib/ink/builder'
-import type { Pt, Tier } from '@/lib/ink/types'
-import type {StockName} from '@/lib/ink/paper/stocks';
-import type {EdgeSpec, Outline} from '@/lib/ink/paper/edges';
-import type {FaceSvgOptions} from '@/lib/ink/paper/faces';
-import type {SheetShadowKind} from '@/lib/ink/paper/shadows';
+import type { Ink } from '@/lib/ink/builder'
 import { Ink as InkBuilder } from '@/lib/ink/builder'
+import type { InkResult } from '@/lib/ink/builder'
 import { n } from '@/lib/ink/paint'
 import { defineRecipe } from '@/lib/ink/recipes'
 import { curlMarkup } from '@/lib/ink/paper/props'
-import { STICKY_VEIL,  ruleGeometry, stockOf } from '@/lib/ink/paper/stocks'
-import {   edgeInset, outlinePath, sheetOutline, sideInsets } from '@/lib/ink/paper/edges'
-import {  faceMark, renderFaces } from '@/lib/ink/paper/faces'
-import {  contactShadow, farShadow } from '@/lib/ink/paper/shadows'
+import { ruleGeometry, STICKY_VEIL, stockOf, type StockName } from '@/lib/ink/paper/stocks'
+import { edgeInset, outlinePath, sheetOutline, sideInsets, type EdgeSpec, type Outline } from '@/lib/ink/paper/edges'
+import { faceMark, renderFaces, type FaceSvgOptions } from '@/lib/ink/paper/faces'
+import { contactShadow, farShadow, type SheetShadowKind } from '@/lib/ink/paper/shadows'
+import type { Pt, Tier } from '@/lib/ink/types'
 import { RULER } from '@/lib/ink/shapes'
 
 export interface SheetParams {
@@ -30,7 +27,7 @@ export function sheetPad(edge: EdgeSpec): number {
   return Math.ceil(edgeInset(edge) * 0.4) + 3
 }
 
-function railPath(pts: ReadonlyArray<Pt>, from: number, to: number, gap = 2.4): string {
+function railPath(pts: readonly Pt[], from: number, to: number, gap = 2.4): string {
   let d = ''
   let lx = -1e9, ly = -1e9
   for (let i = from; i < to; i++) {

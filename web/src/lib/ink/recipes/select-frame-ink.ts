@@ -1,9 +1,9 @@
-import type { Box, RecipeContext } from '@/lib/ink/recipes'
-import type { Ink } from '@/lib/ink/builder'
 import { wash } from '@/lib/ink/fills'
 import { roundRectPoly } from '@/lib/ink/geom'
 import { clamp } from '@/lib/ink/rng'
-import { RULER, box, focusRing, squiggle } from '@/lib/ink/shapes'
+import { box, focusRing, squiggle, RULER } from '@/lib/ink/shapes'
+import type { Box, RecipeContext } from '@/lib/ink/recipes'
+import type { Ink } from '@/lib/ink/builder'
 import { drawFieldFrame } from '@/lib/ink/recipes/field-frame-ink'
 
 export interface SelectFrameParams {

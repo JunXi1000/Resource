@@ -1,8 +1,8 @@
 import type { Ink } from '@/lib/ink/builder'
-import type { Box } from '@/lib/ink/recipes'
-import type { Line, PenName, Pt } from '@/lib/ink/types'
 import { paint } from '@/lib/ink/paint'
 import { hashSeed } from '@/lib/ink/rng'
+import type { Box } from '@/lib/ink/recipes'
+import type { Line, PenName, Pt } from '@/lib/ink/types'
 
 export const REVEAL_DASH = '[&>svg_[data-part=reveal]]:[stroke-dasharray:1]'
 export const REVEAL_WHEN_CHECKED = 'data-touched:data-[state=checked]:[&>svg_[data-part=reveal]]:animate-[ll-draw_var(--ll-dur-sheet)_var(--ll-ease-out)_both]'
@@ -19,7 +19,7 @@ export function revealId(seed: string, name: string): string {
 
 export interface RevealOpts {
   id: string
-  lines: Array<Line>
+  lines: Line[]
   pen: PenName
   box: Box
   width?: number

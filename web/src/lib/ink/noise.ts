@@ -16,7 +16,7 @@ export function noise1(rng: Rng, length: number, wavelength: number): (s: number
   }
 }
 
-export function wander(rng: Rng, ...periods: Array<number>): (x: number) => number {
+export function wander(rng: Rng, ...periods: number[]): (x: number) => number {
   const ph = periods.map(() => rng() * Math.PI * 2)
   return (x) => {
     let v = 0

@@ -1,6 +1,5 @@
 import type { EdgeSpec } from '@/lib/ink/paper/edges'
-import type {SheetShadowKind} from '@/lib/ink/paper/shadows';
-import {  sheetShadow } from '@/lib/ink/paper/shadows'
+import { sheetShadow, type SheetShadowKind } from '@/lib/ink/paper/shadows'
 
 export type StockName =
   | 'paper' | 'card' | 'slip' | 'index-card' | 'graph' | 'dot-grid' | 'check' | 'ledger' | 'pad' | 'kraft' | 'napkin'
@@ -68,13 +67,13 @@ export const STOCKS: Record<StockName, StockDef> = {
   receipt: def({ name: 'receipt', label: 'Receipt', stockClass: 'll-stock-photo', tooth: 'none', shadow: 'slip', shadowClass: 'll-sheet-slip', edge: { top: 'zig', bottom: 'zig' }, rules: 'none', tilt: 0.9 }),
 }
 
-export const STOCK_NAMES = Object.keys(STOCKS) as Array<StockName>
+export const STOCK_NAMES = Object.keys(STOCKS) as StockName[]
 
 export function stockOf(name: string | undefined): StockDef {
   return (name && (STOCKS as Record<string, StockDef>)[name]) || STOCKS.paper
 }
 
-export const TOOTH_TILES: Record<Tooth, ReadonlyArray<readonly [tile: string, w: number, h: number]>> = {
+export const TOOTH_TILES: Record<Tooth, readonly (readonly [tile: string, w: number, h: number])[]> = {
   cold: [['fibre', 240, 240], ['relief', 192, 192], ['cloud', 720, 720]],
   fine: [['fibre', 240, 240], ['slip', 128, 128], ['cloud', 720, 720]],
   kraft: [['fibre', 240, 240], ['kraft', 192, 96], ['cloud', 720, 720]],
@@ -92,7 +91,7 @@ interface BgLayer {
   clip?: string
 }
 
-function layersToDecls(layers: Array<BgLayer>): CssDecls {
+function layersToDecls(layers: BgLayer[]): CssDecls {
   const join = (f: (l: BgLayer) => string) => layers.map(f).join(', ')
   return {
     backgroundImage: join((l) => l.image),
@@ -190,7 +189,7 @@ export function rulesLayer(kind: RuleName, o: RulesOpts = {}): RulesLayer | null
     const { pitch, first } = geo
     const rule = soft(kind === 'pad' ? 'pad-rule' : 'rule-blue', kind === 'pad' ? 100 : 82)
     const red = soft('rule-red', 88)
-    const layers: Array<BgLayer> = []
+    const layers: BgLayer[] = []
     if (geo.margin !== undefined) layers.push({ image: vline(red, geo.margin), size: '100% 100%', repeat: 'no-repeat' })
     if (kind === 'index') layers.push({ image: hline(red, 1.2), size: `100% ${up(first + 1, geo)}`, repeat: 'no-repeat' })
     const blueFirst = kind === 'index' ? first + pitch : first

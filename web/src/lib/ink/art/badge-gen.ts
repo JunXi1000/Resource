@@ -1,6 +1,6 @@
-import type { ArtColour, ArtDef, BadgeGen, Part } from '@/lib/ink/art/types'
 import { hashSeed } from '@/lib/ink/rng'
 import { measureText } from '@/lib/ink/art/glyph-text'
+import type { ArtColour, ArtDef, BadgeGen, Part } from '@/lib/ink/art/types'
 
 export type BadgeOpts = Partial<Omit<BadgeGen, 'gen' | 'text' | 'kind'>> & { fill?: ArtColour }
 
@@ -39,11 +39,11 @@ const j = (v: number, rnd: () => number, a = 0.35): number => r1(v + rnd() * a)
 
 interface Shape {
   outline: string
-  under?: Array<Part>
+  under?: Part[]
   ring?: string
   text: { x: number; y: number; w: number; em: number }
   sub?: { y: number; w: number }
-  over?: Array<Part>
+  over?: Part[]
   deco: { x: number; y: number }
 }
 
@@ -149,8 +149,8 @@ export function badgeSkeleton(text: string, o: BadgeOpts = {}): ArtDef {
   const perEm = measureText('hand', ttl, 1)
   const em = r1(Math.min(shape.text.em, shape.text.w / perEm))
   const capH = 0.745 * em
-  const build = (small: boolean): Array<Part> => {
-    const parts: Array<Part> = []
+  const build = (small: boolean): Part[] => {
+    const parts: Part[] = []
     if (shape.under) parts.push(...shape.under)
     parts.push(['f', color, shape.outline])
     parts.push(['s', shape.outline, small ? 1.15 : 1.05])

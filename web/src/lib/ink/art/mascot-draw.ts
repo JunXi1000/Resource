@@ -1,6 +1,5 @@
+import { dieCut, type DieCutResult } from '@/lib/ink/art-draw'
 import type { ArtDef } from '@/lib/ink/art/types'
-import type {DieCutResult} from '@/lib/ink/art-draw';
-import {  dieCut } from '@/lib/ink/art-draw'
 import { clamp } from '@/lib/ink/rng'
 
 export interface MascotDrawOpts {

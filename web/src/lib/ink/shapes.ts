@@ -1,7 +1,6 @@
 import type { Line, PenName, PenSpec, Pt, StrokeOpts } from '@/lib/ink/types'
 import type { Ink } from '@/lib/ink/builder'
-import type {Rng} from '@/lib/ink/rng';
-import {  clamp } from '@/lib/ink/rng'
+import { clamp, type Rng } from '@/lib/ink/rng'
 import { TAU, seg } from '@/lib/ink/geom'
 import { n } from '@/lib/ink/paint'
 import { pen } from '@/lib/ink/pens'
@@ -17,23 +16,23 @@ const dirv = (a: Pt, b: Pt): Pt => {
   return [(b[0] - a[0]) / l, (b[1] - a[1]) / l]
 }
 
-function put(ink: Ink, salt: string, gen: (rng: Rng) => Array<Line>, defaultPen: PenName, o: ShapeOpts): void {
+function put(ink: Ink, salt: string, gen: (rng: Rng) => Line[], defaultPen: PenName, o: ShapeOpts): void {
   ink.lines(gen(ink.next(salt)), o.pen ?? defaultPen, o.opts)
 }
 
-export function chain(vs: Array<Pt>, bows: Array<number>, rad: number, rng: Rng, cnt = 14): Array<Pt> {
+export function chain(vs: Pt[], bows: number[], rad: number, rng: Rng, cnt = 14): Pt[] {
   const E = vs.length - 1
-  const d: Array<Pt> = [], len: Array<number> = []
+  const d: Pt[] = [], len: number[] = []
   for (let i = 0; i < E; i++) {
     d.push(dirv(vs[i], vs[i + 1]))
     len.push(Math.hypot(vs[i + 1][0] - vs[i][0], vs[i + 1][1] - vs[i][1]))
   }
-  const rv: Array<number> = new Array(E + 1).fill(0)
+  const rv: number[] = new Array(E + 1).fill(0)
   for (let j = 1; j < E; j++) {
     const r = Math.min(rad * (0.75 + rng() * 0.5), len[j - 1] * 0.45, len[j] * 0.45)
     rv[j] = r < 0.6 ? 0 : r
   }
-  const out: Array<Pt> = []
+  const out: Pt[] = []
   for (let i = 0; i < E; i++) {
     const s: Pt = [vs[i][0] + d[i][0] * rv[i], vs[i][1] + d[i][1] * rv[i]]
     const e: Pt = [vs[i + 1][0] - d[i][0] * rv[i + 1], vs[i + 1][1] - d[i][1] * rv[i + 1]]
@@ -57,20 +56,20 @@ export function chain(vs: Array<Pt>, bows: Array<number>, rad: number, rng: Rng,
 
 export const RULER: StrokeOpts = { poly: true, raw: true, start: 'soft', end: 'soft', speed: 1, dry: 0 }
 
-export function lineLines(x1: number, y1: number, x2: number, y2: number): Array<Line> {
+export function lineLines(x1: number, y1: number, x2: number, y2: number): Line[] {
   return [{ pts: [[x1, y1], [x2, y2]], o: RULER }]
 }
 export function line(ink: Ink, x1: number, y1: number, x2: number, y2: number, o: ShapeOpts = {}): void {
   put(ink, 'line', () => lineLines(x1, y1, x2, y2), 'pencil', o)
 }
 
-export function squiggleLines(rng: Rng, x: number, y: number, w: number, o: { h?: number; amp?: number; wl?: number } = {}): Array<Line> {
+export function squiggleLines(rng: Rng, x: number, y: number, w: number, o: { h?: number; amp?: number; wl?: number } = {}): Line[] {
   const h = o.h ?? 12
   const amp = clamp(h * 0.2, 1.4, 3.2) * (o.amp ?? 1), wl = clamp(h * 1.1, 10, 18) * (o.wl ?? 1)
   const p1 = rng.range(0, TAU), p2 = rng.range(0, TAU), p3 = rng.range(0, TAU)
   const drift = rng.gauss(0, 0.6)
-  const build = (xa: number, xb: number): Array<Pt> => {
-    const pts: Array<Pt> = []
+  const build = (xa: number, xb: number): Pt[] => {
+    const pts: Pt[] = []
     let ph = rng.range(0, TAU)
     for (let xx = xa; xx <= xb; xx += 1.8) {
       ph += (1.8 / wl) * TAU * (1 + 0.22 * Math.sin(xx / 37 + p1) + 0.1 * Math.sin(xx / 11 + p2))
@@ -92,9 +91,9 @@ export function squiggle(ink: Ink, x: number, y: number, w: number, o: ShapeOpts
   put(ink, 'sq', (r) => squiggleLines(r, x, y, w, o), 'ink', o)
 }
 
-export function underlineLines(rng: Rng, x: number, y: number, w: number, o: { kind?: 'single' | 'double' | 'wavy' } = {}): Array<Line> {
+export function underlineLines(rng: Rng, x: number, y: number, w: number, o: { kind?: 'single' | 'double' | 'wavy' } = {}): Line[] {
   if (o.kind === 'wavy') return squiggleLines(rng, x, y, w, { h: 7, amp: 0.85 })
-  const out: Array<Line> = [{ pts: [[x, y], [x + w, y]], o: RULER }]
+  const out: Line[] = [{ pts: [[x, y], [x + w, y]], o: RULER }]
   if (o.kind === 'double') out.push({ pts: [[x, y + 3.6], [x + w, y + 3.6]], o: RULER })
   return out
 }
@@ -102,11 +101,11 @@ export function underline(ink: Ink, x: number, y: number, w: number, o: ShapeOpt
   put(ink, 'ul', (r) => underlineLines(r, x, y, w, o), 'ink', o)
 }
 
-export function strikeLines(rng: Rng, x: number, y: number, w: number, o: { double?: boolean } = {}): Array<Line> {
+export function strikeLines(rng: Rng, x: number, y: number, w: number, o: { double?: boolean } = {}): Line[] {
   const tilt = rng.gauss(0, 0.012) * w
   const x1 = x - rng.range(1, 3), x2 = x + w + rng.range(0, 3)
   const so: StrokeOpts = { start: 'soft', end: 'flick', speed: 1.25, wobble: 0.6 }
-  const out: Array<Line> = [{ pts: seg(x1, y + tilt / 2, x2, y - tilt / 2, rng.gauss(0, 0.003) * w, Math.max(3, Math.ceil(w / 16))), o: so }]
+  const out: Line[] = [{ pts: seg(x1, y + tilt / 2, x2, y - tilt / 2, rng.gauss(0, 0.003) * w, Math.max(3, Math.ceil(w / 16))), o: so }]
   if (o.double) out.push({ pts: seg(x1 + 2, y + 2.5, x2 - 1, y + 1.5 - tilt, 0, 6), o: so })
   return out
 }
@@ -120,7 +119,7 @@ export interface BoxOpts {
   wobble?: number
 }
 
-export function boxLines(rng: Rng, x: number, y: number, w: number, h: number, o: BoxOpts = {}): Array<Line> {
+export function boxLines(rng: Rng, x: number, y: number, w: number, h: number, o: BoxOpts = {}): Line[] {
   const k = o.loose ?? 1
   const m = Math.min(w, h)
   const jc = clamp(0.012 * m, 0.12, 0.4) * k
@@ -133,7 +132,7 @@ export function boxLines(rng: Rng, x: number, y: number, w: number, h: number, o
   const t0 = rng.range(0.35, 0.65)
   const S: Pt = [TL[0] + (TR[0] - TL[0]) * t0, TL[1] + (TR[1] - TL[1]) * t0]
   const run = Math.min(0.06 * w, rng.range(1.6, 2.6))
-  const vs: Array<Pt> = [S, TR, BR, BL, TL, [S[0] + run, S[1]]]
+  const vs: Pt[] = [S, TR, BR, BL, TL, [S[0] + run, S[1]]]
   const bows = [-lift(w * (1 - t0)), drift(h), lift(w), drift(h), -lift(w * t0 + run)]
   return [{ pts: chain(vs, bows, rad, rng), o: { speed: 1, wobble: 0.28 * (o.wobble ?? 1), dry: 0, end: 'soft', start: 'soft' } }]
 }
@@ -141,13 +140,13 @@ export function box(ink: Ink, x: number, y: number, w: number, h: number, o: Sha
   put(ink, 'box', (r) => boxLines(r, x, y, w, h, o), 'ink', o)
 }
 
-export function loopLines(rng: Rng, cx: number, cy: number, rx: number, ry: number, o: { turns?: number; a0?: number; drift?: number; breathe?: number; loose?: number; clean?: boolean } = {}): Array<Line> {
+export function loopLines(rng: Rng, cx: number, cy: number, rx: number, ry: number, o: { turns?: number; a0?: number; drift?: number; breathe?: number; loose?: number; clean?: boolean } = {}): Line[] {
   if (o.clean) {
     const a0 = o.a0 ?? rng.range(-2.9, -1.8)
     const steps = Math.max(24, Math.ceil((rx + ry) * 0.6))
     const turn = 1 + 2.2 / Math.max(6, Math.PI * (rx + ry))
     const ph = rng.range(0, TAU)
-    const pts: Array<Pt> = []
+    const pts: Pt[] = []
     for (let i = 0; i <= steps; i++) {
       const a = a0 + (i / steps) * turn * TAU
       const kk = 1 + 0.006 * Math.sin(2 * a + ph)
@@ -162,7 +161,7 @@ export function loopLines(rng: Rng, cx: number, cy: number, rx: number, ry: numb
   const breathe = o.breathe ?? 0.035
   const ph = rng.range(0, TAU)
   const steps = Math.max(16, Math.ceil((rx + ry) * turns * 0.5))
-  const pts: Array<Pt> = []
+  const pts: Pt[] = []
   for (let i = 0; i <= steps; i++) {
     const t = i / steps, a = a0 + t * turns * TAU
     const kk = 1 + breathe * Math.sin(2 * a + ph) + drift * t
@@ -175,14 +174,14 @@ export function loop(ink: Ink, cx: number, cy: number, rx: number, ry: number, o
   put(ink, 'loop', (r) => loopLines(r, cx, cy, rx, ry, o), 'ink', o)
 }
 
-export function arrowLines(rng: Rng, x1: number, y1: number, x2: number, y2: number, o: { head?: 'v' | 'two' | 'open' | 'solid' | 'none'; curl?: boolean; curve?: number; headLen?: number } = {}): Array<Line> {
+export function arrowLines(rng: Rng, x1: number, y1: number, x2: number, y2: number, o: { head?: 'v' | 'two' | 'open' | 'solid' | 'none'; curl?: boolean; curve?: number; headLen?: number } = {}): Line[] {
   const len = Math.hypot(x2 - x1, y2 - y1)
   const bow = (o.curve ?? rng.range(-0.1, 0.1)) * len
   let shaft = seg(x1, y1, x2, y2, bow, Math.max(6, Math.ceil(len / 8)))
   if (o.curl) {
     const m = Math.floor(shaft.length * 0.5), pm = shaft[m], pn = shaft[m + 1] || pm
     const d0 = dirv(pm, pn), r0 = Math.min(9, len * 0.09)
-    const loopPts: Array<Pt> = []
+    const loopPts: Pt[] = []
     for (let i = 0; i <= 14; i++) {
       const a = -Math.PI / 2 + (i / 14) * TAU
       const lx = Math.cos(a) * r0, ly = Math.sin(a) * r0 * 1.15 + r0 * 1.15
@@ -190,7 +189,7 @@ export function arrowLines(rng: Rng, x1: number, y1: number, x2: number, y2: num
     }
     shaft = [...shaft.slice(0, m), ...loopPts, ...shaft.slice(m + 1)]
   }
-  const out: Array<Line> = [{ pts: shaft, o: { end: 'flick', start: 'pool' } }]
+  const out: Line[] = [{ pts: shaft, o: { end: 'flick', start: 'pool' } }]
   const style = o.head ?? 'v'
   if (style === 'none') return out
   const p = shaft[shaft.length - 1], q = shaft[shaft.length - 3] || shaft[0]
@@ -219,7 +218,7 @@ export function arrow(ink: Ink, x1: number, y1: number, x2: number, y2: number, 
   put(ink, 'arrow', (r) => arrowLines(r, x1, y1, x2, y2, o), 'ink', o)
 }
 
-export function checkLines(rng: Rng, x: number, y: number, s: number): Array<Line> {
+export function checkLines(rng: Rng, x: number, y: number, s: number): Line[] {
   const a: Pt = [x + s * rng.range(0, 0.1), y + s * rng.range(0.45, 0.58)]
   const b: Pt = [x + s * rng.range(0.32, 0.42), y + s * rng.range(0.86, 0.96)]
   const c: Pt = [x + s * rng.range(0.9, 1.02), y + s * rng.range(0, 0.1)]
@@ -230,7 +229,7 @@ export function check(ink: Ink, x: number, y: number, s: number, o: ShapeOpts = 
   put(ink, 'check', (r) => checkLines(r, x, y, s), 'greenfelt', o)
 }
 
-export function crossLines(rng: Rng, x: number, y: number, s: number): Array<Line> {
+export function crossLines(rng: Rng, x: number, y: number, s: number): Line[] {
   const j = (): number => rng.gauss(0, 0.04 * s)
   return [
     { pts: seg(x + j(), y + j(), x + s + j(), y + s + j(), rng.gauss(0, 0.03 * s), 5), o: { end: 'flick', wobble: 0.5 } },
@@ -241,8 +240,8 @@ export function cross(ink: Ink, x: number, y: number, s: number, o: ShapeOpts = 
   put(ink, 'cross', (r) => crossLines(r, x, y, s), 'redfelt', o)
 }
 
-export function asteriskLines(rng: Rng, cx: number, cy: number, s: number): Array<Line> {
-  const out: Array<Line> = []
+export function asteriskLines(rng: Rng, cx: number, cy: number, s: number): Line[] {
+  const out: Line[] = []
   for (let k = 0; k < 3; k++) {
     const a = Math.PI / 2 + (k * Math.PI) / 3 + rng.gauss(0, 0.07)
     const l = 0.5 * s * rng.range(0.85, 1)
@@ -255,11 +254,11 @@ export function asterisk(ink: Ink, cx: number, cy: number, s: number, o: ShapeOp
   put(ink, 'ast', (r) => asteriskLines(r, cx, cy, s), 'redfelt', o)
 }
 
-export function spiralLines(rng: Rng, cx: number, cy: number, r0: number, o: { turns?: number; steps?: number; shrink?: number } = {}): Array<Line> {
+export function spiralLines(rng: Rng, cx: number, cy: number, r0: number, o: { turns?: number; steps?: number; shrink?: number } = {}): Line[] {
   const turns = o.turns ?? 2.3
   const steps = o.steps ?? 26
   const a0 = rng.range(0, TAU)
-  const pts: Array<Pt> = []
+  const pts: Pt[] = []
   for (let i = 0; i <= steps; i++) {
     const t = i / steps
     const r = r0 * (1 - (o.shrink ?? 0.78) * t)
@@ -272,8 +271,8 @@ export function spiral(ink: Ink, cx: number, cy: number, r: number, o: ShapeOpts
   put(ink, 'spiral', (rg) => spiralLines(rg, cx, cy, r, o), 'ink', o)
 }
 
-export function starLines(rng: Rng, cx: number, cy: number, r: number): Array<Line> {
-  const pts: Array<Pt> = []
+export function starLines(rng: Rng, cx: number, cy: number, r: number): Line[] {
+  const pts: Pt[] = []
   const a0 = -Math.PI / 2 + rng.gauss(0, 0.06)
   for (let i = 0; i <= 5; i++) {
     const a = a0 + ((i * 2) % 5) * (TAU / 5)
@@ -287,9 +286,9 @@ export function star(ink: Ink, cx: number, cy: number, r: number, o: ShapeOpts =
   put(ink, 'star', (rg) => starLines(rg, cx, cy, r), 'ink', o)
 }
 
-export function tallyLines(rng: Rng, x: number, y: number, count: number, gh: number): { lines: Array<Line>; width: number } {
+export function tallyLines(rng: Rng, x: number, y: number, count: number, gh: number): { lines: Line[]; width: number } {
   const step = 0.26 * gh, gw = 1.05 * gh + 6
-  const lines: Array<Line> = []
+  const lines: Line[] = []
   let gx = x
   let left = count
   while (left > 0) {
@@ -311,14 +310,14 @@ export function tally(ink: Ink, x: number, y: number, count: number, gh: number,
   return t.width
 }
 
-export function bracketLines(rng: Rng, x: number, y: number, h: number, o: { kind?: 'square' | 'curly' | 'round'; dir?: 1 | -1 } = {}): Array<Line> {
+export function bracketLines(rng: Rng, x: number, y: number, h: number, o: { kind?: 'square' | 'curly' | 'round'; dir?: 1 | -1 } = {}): Line[] {
   const d = o.dir ?? 1
   const tip = clamp(h * 0.12, 3, 9)
   const kind = o.kind ?? 'square'
   const so: StrokeOpts = { end: 'flick', wobble: 0.5 }
   if (kind === 'square') {
     const rad = Math.min(0.35 * tip, 2.2)
-    const pts: Array<Pt> = [
+    const pts: Pt[] = [
       [x + d * tip * rng.range(0.85, 1.1), y + rng.gauss(0, 0.5)],
       [x + d * rad, y + rng.gauss(0, 0.2)],
       [x + rng.gauss(0, 0.2), y + rad],
@@ -332,7 +331,7 @@ export function bracketLines(rng: Rng, x: number, y: number, h: number, o: { kin
     const m = y + h * rng.range(0.47, 0.53)
     return [{ pts: [[x + d * tip, y], [x + 0.35 * d * tip, y + 0.06 * h], [x + 0.3 * d * tip, m - 0.12 * h], [x - 0.15 * d * tip, m], [x + 0.3 * d * tip, m + 0.12 * h], [x + 0.35 * d * tip, y + h * 0.94], [x + d * tip, y + h]], o: so }]
   }
-  const pts: Array<Pt> = []
+  const pts: Pt[] = []
   for (let i = 0; i <= 12; i++) {
     const t = i / 12
     pts.push([x + d * tip * (1 - Math.sin(Math.PI * t)), y + h * t])
@@ -343,13 +342,13 @@ export function bracket(ink: Ink, x: number, y: number, h: number, o: ShapeOpts 
   put(ink, 'br', (r) => bracketLines(r, x, y, h, o), 'pencil', o)
 }
 
-export function cloudLines(rng: Rng, cx: number, cy: number, w: number, h: number, o: { bulge?: number } = {}): Array<Line> {
+export function cloudLines(rng: Rng, cx: number, cy: number, w: number, h: number, o: { bulge?: number } = {}): Line[] {
   const rx = w / 2, ry = h / 2
   const bumps = clamp(Math.round((Math.PI * (rx + ry)) / clamp(0.32 * Math.min(w, h), 9, 26)), 6, 40)
   const a0 = -Math.PI / 2 + rng.gauss(0, 0.3)
   const sizes = Array.from({ length: bumps }, () => rng.range(0.75, 1.25))
   const tot = sizes.reduce((a, b) => a + b, 0)
-  const pts: Array<Pt> = []
+  const pts: Pt[] = []
   let a = a0
   const P = (ang: number): Pt => [cx + Math.cos(ang) * rx, cy + Math.sin(ang) * ry]
   for (let i = 0; i < bumps + 1; i++) {
@@ -373,11 +372,11 @@ export function cloud(ink: Ink, cx: number, cy: number, w: number, h: number, o:
   put(ink, 'cloud', (r) => cloudLines(r, cx, cy, w, h, o), 'pencil', o)
 }
 
-export function scribbleLines(rng: Rng, x: number, y: number, w: number, h: number): Array<Line> {
+export function scribbleLines(rng: Rng, x: number, y: number, w: number, h: number): Line[] {
   const step = Math.max(2.2, 0.28 * h)
   const nn = Math.max(3, Math.round(w / step))
   const lean = rng.gauss(0.18, 0.08) * h
-  const pts: Array<Pt> = []
+  const pts: Pt[] = []
   for (let k = 0; k <= nn; k++) {
     const up = k % 2 === 0
     pts.push([clamp(x + (k / nn) * w + rng.gauss(0, 0.18 * step) + (up ? -lean / 2 : lean / 2), x, x + w), up ? y + rng.range(0, 0.2) * h : y + rng.range(0.8, 1) * h])
@@ -388,10 +387,10 @@ export function scribble(ink: Ink, x: number, y: number, w: number, h: number, o
   put(ink, 'scrib', (r) => scribbleLines(r, x, y, w, h), 'red', o)
 }
 
-export function burstLines(rng: Rng, cx: number, cy: number, r: number, o: { rays?: number } = {}): Array<Line> {
+export function burstLines(rng: Rng, cx: number, cy: number, r: number, o: { rays?: number } = {}): Line[] {
   const k = o.rays ?? 10
   const a0 = rng.range(0, TAU)
-  const out: Array<Line> = []
+  const out: Line[] = []
   for (let i = 0; i < k; i++) {
     const a = a0 + (i / k) * TAU + rng.gauss(0, 0.07)
     const r0 = r * rng.range(0.42, 0.52), r1 = r * (i % 2 ? rng.range(0.78, 0.9) : rng.range(0.98, 1.1))
@@ -410,9 +409,9 @@ export interface FocusRingOpts {
   ticks?: boolean
 }
 
-export function focusRingLines(rng: Rng, x: number, y: number, w: number, h: number, o: FocusRingOpts = {}): Array<Line> {
+export function focusRingLines(rng: Rng, x: number, y: number, w: number, h: number, o: FocusRingOpts = {}): Line[] {
   const gap = o.gap ?? 4
-  const out: Array<Line> = []
+  const out: Line[] = []
   const rect = (o.shape ?? 'rect') === 'rect'
   const X = x - gap, Y = y - gap, W = w + gap * 2, H = h + gap * 2
   if (rect) {
@@ -448,9 +447,9 @@ export function focusRing(ink: Ink, x: number, y: number, w: number, h: number, 
   put(ink, 'focus', (r) => focusRingLines(r, x, y, w, h, o), 'focus', o)
 }
 
-export function dashedBoxLines(rng: Rng, x: number, y: number, w: number, h: number, o: { r?: number; dash?: number; gap?: number } = {}): Array<Line> {
+export function dashedBoxLines(rng: Rng, x: number, y: number, w: number, h: number, o: { r?: number; dash?: number; gap?: number } = {}): Line[] {
   const r = Math.min(o.r ?? 4, w / 2, h / 2)
-  const cornerPts: Array<Pt> = []
+  const cornerPts: Pt[] = []
   const per = 5
   const arc = (cx: number, cy: number, a0: number): void => {
     for (let i = 0; i <= per; i++) {
@@ -481,10 +480,10 @@ export function dashedBoxLines(rng: Rng, x: number, y: number, w: number, h: num
   const step = per_ / count
   const len = step * (dash / (dash + gap))
   const d0 = rng() * step
-  const out: Array<Line> = []
+  const out: Line[] = []
   for (let i = 0; i < count; i++) {
     const d = d0 + i * step
-    const pts: Array<Pt> = []
+    const pts: Pt[] = []
     for (let k = 0; k <= 4; k++) pts.push(at(d + (len * k) / 4))
     out.push({ pts, o: { ...RULER, simple: true } })
   }

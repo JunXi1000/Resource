@@ -1399,3 +1399,57 @@ code {
     color: var(--ll-ink-you);
   }
 }
+  [data-theme], [data-ll-scope] {
+    --background: var(--ll-desk);
+    --foreground: var(--ll-ink);
+    --card: var(--ll-paper);
+    --card-foreground: var(--ll-ink);
+    --popover: var(--ll-slip);
+    --popover-foreground: var(--ll-ink);
+    --primary: var(--ll-marker);
+    --primary-foreground: var(--ll-ink);
+    --secondary: color-mix(in srgb, var(--ll-hi) 35%, var(--ll-paper));
+    --secondary-foreground: var(--ll-ink);
+    --muted: var(--ll-paper-shade);
+    --muted-foreground: var(--ll-ink-muted);
+    --accent: color-mix(in srgb, var(--ll-hi) 62%, var(--ll-paper));
+    --accent-foreground: var(--ll-ink);
+    --destructive: var(--ll-red);
+    --destructive-foreground: var(--ll-slip);
+    --border: var(--ll-pencil-mark);
+    --input: var(--ll-pencil-mark);
+    --ring: var(--ll-focus);
+    --chart-1: var(--ll-marker);
+    --chart-2: var(--ll-ink-you);
+    --chart-3: var(--ll-green);
+    --chart-4: var(--ll-hi-deep);
+    --chart-5: var(--ll-grape);
+    --sidebar: var(--ll-pad);
+    --sidebar-foreground: var(--ll-ink);
+    --sidebar-primary: var(--ll-marker);
+    --sidebar-primary-foreground: var(--ll-ink);
+    --sidebar-accent: color-mix(in srgb, var(--ll-hi) 40%, var(--ll-pad));
+    --sidebar-accent-foreground: var(--ll-ink);
+    --sidebar-border: var(--ll-pad-rule);
+    --sidebar-ring: var(--ll-focus);
+    --ll-umber: rgb(var(--ll-shade));
+    --ll-line: var(--ll-pencil-mark);
+    --ll-line-soft: color-mix(in srgb, var(--ll-pencil-mark) 55%, transparent);
+    --ll-link: var(--ll-ink-you);
+    --ll-input-ink: var(--ll-ink-you);
+    --ll-caret: var(--ll-ink-you);
+    --ll-placeholder: var(--ll-pencil-text);
+    --ll-hi-select: color-mix(in srgb, var(--ll-hi) 62%, transparent);
+    --ll-selection-text: var(--ll-ink);
+    --ll-riso: var(--ll-marker);
+    --ll-stamp-fill: color-mix(in srgb, var(--ll-marker) 50%, transparent);
+    --ll-stamp-fill-red: color-mix(in srgb, var(--ll-red) 28%, transparent);
+    --ll-stamp-fill-green: color-mix(in srgb, var(--ll-green) 24%, transparent);
+    --ll-diff-add: color-mix(in srgb, var(--ll-green) 16%, transparent);
+    --ll-diff-del: color-mix(in srgb, var(--ll-red) 14%, transparent);
+    --ll-syn-keyword: color-mix(in srgb, var(--ll-red), var(--ll-ink) 14%);
+    --ll-syn-string: color-mix(in srgb, var(--ll-green), var(--ll-ink) 14%);
+    --ll-syn-name: var(--ll-ink-you);
+    --ll-syn-number: color-mix(in srgb, var(--ll-orange-text), var(--ll-ink) 10%);
+    --ll-syn-comment: var(--ll-pencil-text);
+}

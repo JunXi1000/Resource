@@ -1,19 +1,13 @@
-"use client"
-
 import * as React from "react"
 
-import type {EdgeSpec} from "@/lib/ink/paper/edges";
-import type {Accent, TapeKind} from "@/lib/ink/paper/props";
-import type {SheetShadowKind} from "@/lib/ink/paper/shadows";
-import type {RuleName, StockName} from "@/lib/ink/paper/stocks";
-import {  edgeInset, edgeName, isCutEdge } from "@/lib/ink/paper/edges"
+import { isCutEdge, edgeInset, edgeName, type EdgeSpec } from "@/lib/ink/paper/edges"
 import { PaperDefs } from "@/lib/ink/paper/defs"
 import { faceLook, tilesOf } from "@/lib/ink/paper/faces"
-import {   binderClip, clip, pin, staple } from "@/lib/ink/paper/props"
+import { clip, pin, staple, binderClip, type Accent, type TapeKind } from "@/lib/ink/paper/props"
 import { PropSvg } from "@/lib/ink/paper/prop-svg"
 import { useInkFaces } from "@/lib/ink/paper/sheet-layers"
-import {  dropShadow, sheetShadow, tiltFor } from "@/lib/ink/paper/shadows"
-import { RULE_OFFSET_VAR,   ruleGeometry, rulesLayer, stockOf } from "@/lib/ink/paper/stocks"
+import { dropShadow, sheetShadow, tiltFor, type SheetShadowKind } from "@/lib/ink/paper/shadows"
+import { RULE_OFFSET_VAR, ruleGeometry, rulesLayer, stockOf, type RuleName, type StockName } from "@/lib/ink/paper/stocks"
 import { InkTiles, useDensity, useInk, useInkSeed, useInkTier, useMergedRef } from "@/lib/ink/react"
 import { handRulesRecipe, sheetRecipe } from "@/lib/ink/recipes/paper-ink"
 import { cn } from "@/lib/utils"

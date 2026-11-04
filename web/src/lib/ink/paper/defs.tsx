@@ -1,11 +1,10 @@
 import * as React from "react"
 
-import type {PaperTileName} from "@/lib/ink/textures";
-import {  svgPatternDefs } from "@/lib/ink/textures"
+import { svgPatternDefs, type PaperTileName } from "@/lib/ink/textures"
 
-export const PAPER_DEF_TILES: ReadonlyArray<PaperTileName> = ["fibre", "relief", "slip", "kraft", "cloud"]
+export const PAPER_DEF_TILES: readonly PaperTileName[] = ["fibre", "relief", "slip", "kraft", "cloud"]
 
-export function PaperDefs({ tiles = PAPER_DEF_TILES }: { tiles?: ReadonlyArray<PaperTileName> }) {
+export function PaperDefs({ tiles = PAPER_DEF_TILES }: { tiles?: readonly PaperTileName[] }) {
   const html = React.useMemo(() => svgPatternDefs({ tiles }), [tiles])
   return (
     <svg data-ll-paper-defs="" width={0} height={0} style={{ position: "absolute" }} aria-hidden="true" focusable="false">
@@ -14,7 +13,7 @@ export function PaperDefs({ tiles = PAPER_DEF_TILES }: { tiles?: ReadonlyArray<P
   )
 }
 
-export function ensurePaperDefs(tiles: ReadonlyArray<PaperTileName>): void {
+export function ensurePaperDefs(tiles: readonly PaperTileName[]): void {
   if (typeof document === "undefined") return
   const missing = tiles.filter((t) => !document.getElementById(`ll-tex-${t}-img`))
   if (!missing.length) return

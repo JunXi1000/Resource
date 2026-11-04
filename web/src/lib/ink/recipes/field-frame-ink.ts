@@ -1,9 +1,9 @@
-import type { Ink } from '@/lib/ink/builder'
-import type { Box, RecipeContext } from '@/lib/ink/recipes'
 import { wash } from '@/lib/ink/fills'
 import { roundRectPoly } from '@/lib/ink/geom'
 import { clamp } from '@/lib/ink/rng'
-import { RULER, box, dashedBox, focusRing, squiggle } from '@/lib/ink/shapes'
+import { box, dashedBox, focusRing, squiggle, RULER } from '@/lib/ink/shapes'
+import type { Ink } from '@/lib/ink/builder'
+import type { RecipeContext, Box } from '@/lib/ink/recipes'
 
 export interface FieldFrameParams {
   disabled?: boolean

@@ -1,15 +1,14 @@
 import * as React from "react"
 
-import type {GrainMaskKind, PaperTileName} from "@/lib/ink/textures";
 import { GRAINS } from "@/lib/ink/builder"
-import {  PAPER_TILES,  inkDefsSvg, svgMaskDefs, svgPatternDefs, textureCssVars } from "@/lib/ink/textures"
+import { PAPER_TILES, inkDefsSvg, svgMaskDefs, svgPatternDefs, textureCssVars, type GrainMaskKind, type PaperTileName } from "@/lib/ink/textures"
 
 export function InkDefs({
   kinds = GRAINS,
   patterns,
 }: {
-  kinds?: ReadonlyArray<GrainMaskKind>
-  patterns?: boolean | ReadonlyArray<PaperTileName>
+  kinds?: readonly GrainMaskKind[]
+  patterns?: boolean | readonly PaperTileName[]
 }) {
   const token = React.useRef<object>({})
   const [hidden, setHidden] = React.useState(false)
@@ -36,8 +35,8 @@ export function InkDefs({
   )
 }
 
-export function InkTiles({ tiles }: { tiles: ReadonlyArray<PaperTileName> | true }) {
-  const names = tiles === true ? (Object.keys(PAPER_TILES) as Array<PaperTileName>) : tiles
+export function InkTiles({ tiles }: { tiles: readonly PaperTileName[] | true }) {
+  const names = tiles === true ? (Object.keys(PAPER_TILES) as PaperTileName[]) : tiles
   return (
     <>
       {names.map((name) => (
@@ -62,18 +61,18 @@ const first = () => instances.keys().next().value
 const hasInjected = () => document.querySelector('[data-ll-defs="injected"]') !== null
 
 const markupCache = new Map<string, string>()
-function defsMarkup(kinds: ReadonlyArray<GrainMaskKind>, tiles: string): string {
+function defsMarkup(kinds: readonly GrainMaskKind[], tiles: string): string {
   const key = `${kinds.join(",")}|${tiles}`
   let s = markupCache.get(key)
   if (s === undefined) {
     s = svgMaskDefs({ kinds })
-    if (tiles) s += svgPatternDefs(tiles === "all" ? {} : { tiles: tiles.split(",") as Array<PaperTileName> })
+    if (tiles) s += svgPatternDefs(tiles === "all" ? {} : { tiles: tiles.split(",") as PaperTileName[] })
     markupCache.set(key, s)
   }
   return s
 }
 
-export const KEVIN_SANS_CSS = "/fonts/kevin-sans.css"
+export const KEVIN_SANS_CSS = "https://kevintngo.github.io/looseleaf/fonts/kevin-sans.css"
 
 export function ensureInkFonts(): void {
   if (typeof document === "undefined" || document.querySelector("[data-ll-fonts]")) return

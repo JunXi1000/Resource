@@ -1,12 +1,10 @@
-import type { InkResult } from '@/lib/ink/builder'
-import type { Pt, Tier } from '@/lib/ink/types'
-import type {PaintKey} from '@/lib/ink/paint';
-import type {Rng} from '@/lib/ink/rng';
 import { Ink } from '@/lib/ink/builder'
-import {  n } from '@/lib/ink/paint'
-import {  clamp } from '@/lib/ink/rng'
+import type { InkResult } from '@/lib/ink/builder'
+import { n, type PaintKey } from '@/lib/ink/paint'
+import { clamp, type Rng } from '@/lib/ink/rng'
 import { noise1 } from '@/lib/ink/noise'
 import { TAU, polyPath, resample, roundRectPoly } from '@/lib/ink/geom'
+import type { Pt, Tier } from '@/lib/ink/types'
 
 const tok = (name: string) => `var(--ll-${name})`
 
@@ -30,7 +28,7 @@ function pathTag(d: string, a: PathAttrs): string {
 }
 
 const num = (v: number) => n(v, 10)
-const poly = (pts: ReadonlyArray<Pt>, close = false) => 'M' + pts.map((p) => `${num(p[0])} ${num(p[1])}`).join('L') + (close ? 'Z' : '')
+const poly = (pts: readonly Pt[], close = false) => 'M' + pts.map((p) => `${num(p[0])} ${num(p[1])}`).join('L') + (close ? 'Z' : '')
 
 const circle = (cx: number, cy: number, r: number) => `M${num(cx - r)} ${num(cy)}a${num(r)} ${num(r)} 0 1 0 ${num(2 * r)} 0a${num(r)} ${num(r)} 0 1 0 ${num(-2 * r)} 0z`
 
@@ -43,7 +41,7 @@ const make = (seed: string | number, o: PropOpts) => new Ink(seed, { tier: o.tie
 export type Accent = 'tomato' | 'tangerine' | 'lemon' | 'grass' | 'teal' | 'sky' | 'grape' | 'bubblegum'
 
 export type TapeKind = 'masking' | 'washi-dots' | 'washi-stripes' | 'washi-zigzag' | 'washi-gingham' | 'kraft' | 'clear'
-export const TAPE_KINDS: ReadonlyArray<TapeKind> = ['masking', 'washi-dots', 'washi-stripes', 'washi-zigzag', 'washi-gingham', 'kraft', 'clear']
+export const TAPE_KINDS: readonly TapeKind[] = ['masking', 'washi-dots', 'washi-stripes', 'washi-zigzag', 'washi-gingham', 'kraft', 'clear']
 export type TapeEnds = 'saw' | 'torn' | 'straight' | 'scissor'
 
 export interface TapeOpts extends PropOpts {
@@ -57,10 +55,10 @@ export interface TapeOpts extends PropOpts {
 const WASHI_DEFAULT: Record<string, Accent> = { 'washi-dots': 'bubblegum', 'washi-stripes': 'tangerine', 'washi-zigzag': 'grass', 'washi-gingham': 'sky' }
 const ENDS_DEFAULT: Record<TapeKind, TapeEnds> = { masking: 'saw', kraft: 'saw', clear: 'straight', 'washi-dots': 'scissor', 'washi-stripes': 'scissor', 'washi-zigzag': 'scissor', 'washi-gingham': 'scissor' }
 
-function tapeEnd(kind: TapeEnds, x0: number, dir: 1 | -1, h: number, r: Rng): Array<Pt> {
+function tapeEnd(kind: TapeEnds, x0: number, dir: 1 | -1, h: number, r: Rng): Pt[] {
   const slant = r.range(-1.6, 1.6)
   const at = (y: number, depth: number): Pt => [x0 + dir * (depth + (slant * y) / h), y]
-  const out: Array<Pt> = []
+  const out: Pt[] = []
   if (kind === 'straight') return [at(0, 0.3), at(h, 0.3)]
   if (kind === 'saw') {
     const pitch = r.range(1.7, 2.3)
@@ -134,7 +132,7 @@ export function tape(seed: string | number, o: TapeOpts = {}): InkResult {
       const amp = h * 0.075, step = h * 0.27
       for (let row = 0; row < 3; row++) {
         const y0 = h * (0.22 + row * 0.28)
-        const pts: Array<Pt> = []
+        const pts: Pt[] = []
         for (let x = -step, k = 0; x < w + step; x += step, k++) pts.push([x + pr.gauss(0, 0.12), y0 + (k % 2 ? amp : -amp) + pr.gauss(0, 0.12)])
         zz += poly(pts)
       }
@@ -290,7 +288,7 @@ export function binderClip(seed: string | number, o: BinderClipOpts = {}): InkRe
       pathTag(`M${num(w * 0.64)} ${num(2.6)}C${num(w * 0.72)} ${num(2.6)} ${num(w * 0.8)} ${num(h * 0.06)} ${num(w * 0.79)} ${num(h * 0.14)}`, { stroke: tok('photo'), sw: 0.8, op: 0.85 }),
     'under',
   )
-  const body: Array<Pt> = [
+  const body: Pt[] = [
     [w * 0.2, by], [w * 0.8, by], [w * 0.98 + j() * 0.4, h * 0.96], [w * 0.02 + j() * 0.4, h * 0.96],
   ]
   const bodyPts = densifyRound(body, 4.5)
@@ -306,8 +304,8 @@ export function binderClip(seed: string | number, o: BinderClipOpts = {}): InkRe
   return ink.toSvg({ w, h, pad: 3 })
 }
 
-function densifyRound(v: Array<Pt>, rad: number): Array<Pt> {
-  const out: Array<Pt> = []
+function densifyRound(v: Pt[], rad: number): Pt[] {
+  const out: Pt[] = []
   const m = v.length
   for (let i = 0; i < m; i++) {
     const P = v[(i + m - 1) % m], V = v[i], N = v[(i + 1) % m]
@@ -353,7 +351,7 @@ export function stitches(seed: string | number, w: number, h: number, o: StitchO
   while (u < rs.L - len) {
     const L = len * r.range(0.92, 1.05)
     const off = r.gauss(0, 0.3)
-    const pts: Array<Pt> = []
+    const pts: Pt[] = []
     for (let k = 0; k <= 3; k++) {
       const P0 = at(u + (L * k) / 3)
       const P1 = at(Math.min(rs.L - 0.2, u + (L * k) / 3 + 0.6))
@@ -420,7 +418,7 @@ export function coffeeRing(seed: string | number, o: CoffeeRingOpts = {}): InkRe
     const rr = R * (1 + 0.008 * Math.sin(2 * a + p1) + 0.005 * Math.sin(3 * a + p2))
     return [R0 + Math.cos(a) * rr, R0 + Math.sin(a) * rr * 0.98]
   }
-  const arc = (R: number, a0: number, a1: number): Array<Pt> => {
+  const arc = (R: number, a0: number, a1: number): Pt[] => {
     const steps = Math.max(8, Math.ceil(((a1 - a0) * R) / 3))
     return Array.from({ length: steps + 1 }, (_, i) => pt(a0 + ((a1 - a0) * i) / steps, R))
   }

@@ -1,14 +1,13 @@
+import { PathWriter } from '@/lib/ink/geom'
 import type { Q } from '@/lib/ink/paint'
 import type { Rng } from '@/lib/ink/rng'
+import { GLYPH_FONTS, type GlyphFont } from '@/lib/ink/art/glyphs'
 import type { LetterFont } from '@/lib/ink/art/types'
-import type {GlyphFont} from '@/lib/ink/art/glyphs';
-import { GLYPH_FONTS  } from '@/lib/ink/art/glyphs'
-import { PathWriter } from '@/lib/ink/geom'
 
-type Cmd = readonly [string, ...Array<number>]
-const parsed = new Map<string, Array<Cmd>>()
+type Cmd = readonly [string, ...number[]]
+const parsed = new Map<string, Cmd[]>()
 
-function commands(font: LetterFont, ch: string): Array<Cmd> {
+function commands(font: LetterFont, ch: string): Cmd[] {
   const key = font + ch
   let c = parsed.get(key)
   if (c) return c
