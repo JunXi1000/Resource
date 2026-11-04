@@ -1,5 +1,6 @@
 import type { FC, ReactNode } from "react";
-import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarInset } from "@/components/ui/sidebar";
+import { AppTopNav } from "@/components/app-sidebar/components/AppTopNav";
 
 interface IAppSidebarInset {
   children: ReactNode;
@@ -10,11 +11,7 @@ export const AppSidebarInset: FC<IAppSidebarInset> = ({
 }: IAppSidebarInset) => {
   return (
     <SidebarInset className="min-w-0">
-      <header className="flex h-16 shrink-0 items-center">
-        <div className="px-4">
-          <SidebarTrigger className="-ml-1" />
-        </div>
-      </header>
+      <AppTopNav />
       {children}
     </SidebarInset>
   );
