@@ -21,6 +21,10 @@ RUN curl -L -o upx.tar.xz https://github.com/upx/upx/releases/download/v${UPX_VE
 
 WORKDIR /app
 
+# GOPROXY is overridable for networks where proxy.golang.org is unreachable.
+ARG GOPROXY=https://proxy.golang.org,direct
+ENV GOPROXY=${GOPROXY}
+
 COPY go.mod go.sum ./
 RUN go mod download
 
@@ -32,12 +36,23 @@ RUN CGO_ENABLED=1 GOOS=linux go build -ldflags="-s -w" -a -o safebucket . && \
     mkdir -p /app/data
 
 # Runtime
-FROM gcr.io/distroless/cc-debian12:nonroot
+# debian:bookworm-slim instead of distroless: gcr.io is unreachable from some
+# networks, and this keeps the runtime pullable everywhere. The nonroot user
+# keeps uid 65532 so volumes created by the official distroless image stay
+# writable across upgrades.
+FROM debian:bookworm-slim
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates tzdata \
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd --system --uid 65532 --no-create-home --shell /usr/sbin/nologin nonroot
 
 WORKDIR /app
 
 COPY --from=backend-builder --chown=nonroot:nonroot /app/safebucket ./safebucket
 COPY --chown=nonroot:nonroot --from=backend-builder /app/data /app/data
+
+USER nonroot
 
 EXPOSE 8080
 

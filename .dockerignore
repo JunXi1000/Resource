@@ -66,3 +66,6 @@ data/
 # Local development
 .prettierrc.json
 .prettierignore
+# Local builds (Dockerfile.local) reuse the prebuilt web/dist instead of
+# building the frontend in a node container.
+!web/dist/
