@@ -10,25 +10,11 @@ async function resolveSession(
   return queryClient.ensureQueryData(meQueryOptions()).catch(() => null);
 }
 
-export async function requireAuth({
-  location,
-  context,
-}: {
-  location: { href: string };
-  context: { queryClient: QueryClient; session: Session | null };
-}) {
-  const session = await resolveSession(context.queryClient);
-
-  if (!session) {
-    throw redirect({
-      to: "/auth/login",
-      search: {
-        redirect: location.href,
-      },
-    });
-  }
-}
-
+/**
+ * Admin pages stay hard-gated: anonymous visitors are sent to the
+ * standalone sign-in page. Regular pages gate through the AuthGate +
+ * auth dialog flow instead.
+ */
 export async function requireAdmin({
   location,
   context,

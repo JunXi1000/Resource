@@ -8,6 +8,7 @@ import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import type { QueryClient } from "@tanstack/react-query";
 
 import type { Session } from "@/components/auth-view/types/session";
+import { AuthDialog } from "@/components/auth-view/AuthDialog.tsx";
 import { AppSidebar } from "@/components/app-sidebar/AppSidebar.tsx";
 import { AppSidebarInset } from "@/components/app-sidebar/components/AppSidebarInset.tsx";
 import { Toaster } from "@/components/ui/sonner.tsx";
@@ -42,33 +43,35 @@ function RootComponent() {
   const showSidebar = !isStandalone;
 
   return (
-    <div className="flex h-svh max-h-svh w-full overflow-hidden">
-      {showSidebar && <AppSidebar />}
-      {isStandalone ? (
-        <div className="min-w-0 flex-1 overflow-y-auto">
-          <Outlet />
-        </div>
-      ) : (
-        <AppSidebarInset>
-          <Outlet />
-        </AppSidebarInset>
-      )}
-      {session && !isStandalone && <UploadPanel />}
-      <Toaster />
+    <AuthDialog>
+      <div className="flex h-svh max-h-svh w-full overflow-hidden">
+        {showSidebar && <AppSidebar />}
+        {isStandalone ? (
+          <div className="min-w-0 flex-1 overflow-y-auto">
+            <Outlet />
+          </div>
+        ) : (
+          <AppSidebarInset>
+            <Outlet />
+          </AppSidebarInset>
+        )}
+        {session && !isStandalone && <UploadPanel />}
+        <Toaster />
 
-      {config.environment == EnvironmentType.development && (
-        <TanStackDevtools
-          config={{
-            position: "bottom-left",
-          }}
-          plugins={[
-            {
-              name: "TanStack Router",
-              render: <TanStackRouterDevtoolsPanel />,
-            },
-          ]}
-        />
-      )}
-    </div>
+        {config.environment == EnvironmentType.development && (
+          <TanStackDevtools
+            config={{
+              position: "bottom-left",
+            }}
+            plugins={[
+              {
+                name: "TanStack Router",
+                render: <TanStackRouterDevtoolsPanel />,
+              },
+            ]}
+          />
+        )}
+      </div>
+    </AuthDialog>
   );
 }

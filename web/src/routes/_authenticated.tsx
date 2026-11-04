@@ -1,11 +1,17 @@
 import { Outlet, createFileRoute } from "@tanstack/react-router";
-import { requireAuth } from "@/lib/route-guards";
+
+import { AuthGate } from "@/components/auth-view/AuthGate";
 
 /**
- * Protected layout route
- * All child routes under _authenticated require authentication
+ * Protected layout route. The sidebar stays freely browsable — anonymous
+ * visitors can open these pages, but the content sheet shows a sign-in
+ * card (and the auth dialog pops once) until they sign in. In-page
+ * actions (download / upload / create bucket) gate themselves too.
  */
 export const Route = createFileRoute("/_authenticated")({
-  beforeLoad: requireAuth,
-  component: () => <Outlet />,
+  component: () => (
+    <AuthGate>
+      <Outlet />
+    </AuthGate>
+  ),
 });

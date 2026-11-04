@@ -6,6 +6,7 @@ import type { FC, ReactNode } from "react";
 
 import { nav } from "@/components/app-sidebar/helpers/nav";
 import { useLogout, useSession } from "@/hooks/useAuth";
+import { openAuthDialog } from "@/components/auth-view/AuthDialog";
 import { useBucketsData } from "@/components/bucket-view/hooks/useBucketsData";
 import { BUCKET_DESCRIPTION_MAX_LENGTH } from "@/components/bucket-view/helpers/constants";
 import { FormDialog } from "@/components/dialogs/components/FormDialog";
@@ -174,10 +175,21 @@ export const AppSidebar: FC = () => {
                   {t("navigation.shared_buckets")}
                 </div>
               </SidebarMenuButton>
+              <SidebarMenuAction
+                onClick={() => {
+                  // Creating a bucket is an in-page action: anonymous
+                  // visitors get the sign-in dialog instead.
+                  if (!session || user?.role === "guest") {
+                    openAuthDialog("/dashboard");
+                    return;
+                  }
+                  createBucketDialog.trigger();
+                }}
+              >
+                <Plus />
+              </SidebarMenuAction>
               {session && user?.role !== "guest" && (
-                <SidebarMenuAction>
-                  <Plus onClick={createBucketDialog.trigger} />
-                  <FormDialog
+                <FormDialog
                     {...createBucketDialog.props}
                     title={t("bucket.new_bucket_dialog.title")}
                     description={t("bucket.new_bucket_dialog.description")}
@@ -216,7 +228,6 @@ export const AppSidebar: FC = () => {
                     }}
                     confirmLabel={t("common.create")}
                   />
-                </SidebarMenuAction>
               )}
               <SidebarMenuSub>
                 {buckets.map((bucket) => (

@@ -20,6 +20,8 @@ import {
   publicDownloadUrl,
   publicFilesInfiniteQueryOptions,
 } from "@/queries/public-catalog";
+import { useSession } from "@/hooks/useAuth";
+import { openAuthDialog } from "@/components/auth-view/AuthDialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,10 +53,17 @@ const triggerDownload = (url: string, filename: string) => {
 
 const FileRow: FC<{ file: IPublicFile }> = ({ file }) => {
   const { t } = useTranslation();
+  const session = useSession();
   const [isDownloading, setIsDownloading] = useState(false);
   const Icon = iconFor(file.extension);
 
   const handleDownload = async () => {
+    // Downloading is an in-page action: anonymous visitors get the
+    // sign-in dialog (remembering this page) instead of the file.
+    if (!session) {
+      openAuthDialog(window.location.href);
+      return;
+    }
     setIsDownloading(true);
     try {
       const download = await publicDownloadUrl(file.id);
