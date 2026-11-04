@@ -109,14 +109,22 @@ function VerifyPage() {
               <Label htmlFor="code">{t("register.verify.code_label")}</Label>
               <Input
                 id="code"
-                inputMode="numeric"
+                // The challenge secret is 6 characters from [0-9A-Z]; accept
+                // letters too and normalize the input to uppercase so a
+                // lowercase-typed code still verifies.
                 autoComplete="one-time-code"
+                autoCapitalize="characters"
+                spellCheck={false}
                 maxLength={6}
                 value={code}
                 onChange={(event) =>
-                  setCode(event.target.value.replace(/\D/g, ""))
+                  setCode(
+                    event.target.value
+                      .replace(/[^0-9a-zA-Z]/g, "")
+                      .toUpperCase(),
+                  )
                 }
-                placeholder="000000"
+                placeholder="······"
                 className="text-center text-lg tracking-[0.5em]"
                 disabled={verifyMutation.isPending}
               />
