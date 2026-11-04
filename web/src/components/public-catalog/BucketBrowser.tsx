@@ -57,13 +57,9 @@ const FileRow: FC<{ file: IPublicFile }> = ({ file }) => {
   const [isDownloading, setIsDownloading] = useState(false);
   const Icon = iconFor(file.extension);
 
-  const handleDownload = async () => {
-    // Downloading is an in-page action: anonymous visitors get the
-    // sign-in dialog (remembering this page) instead of the file.
-    if (!session) {
-      openAuthDialog(window.location.href);
-      return;
-    }
+  // Runs the actual download; session-independent so the pending-action
+  // callback recorded below stays valid after the visitor signs in.
+  const startDownload = async () => {
     setIsDownloading(true);
     try {
       const download = await publicDownloadUrl(file.id);
@@ -71,6 +67,16 @@ const FileRow: FC<{ file: IPublicFile }> = ({ file }) => {
     } finally {
       setIsDownloading(false);
     }
+  };
+
+  const handleDownload = () => {
+    // Downloading is an in-page action: anonymous visitors get the
+    // sign-in dialog and the download resumes right after they sign in.
+    if (!session) {
+      openAuthDialog(window.location.href, () => void startDownload());
+      return;
+    }
+    void startDownload();
   };
 
   return (

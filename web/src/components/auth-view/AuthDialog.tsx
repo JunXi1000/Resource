@@ -26,10 +26,16 @@ import { AuthLoginForm } from "@/components/auth-view/AuthLoginForm";
  * The module-level bridge lets non-hook callers (event handlers deep in a
  * component tree, route guards) open the dialog without prop drilling.
  */
-type OpenAuthDialog = (redirectTo?: string) => void;
+type PendingAction = () => void;
+type OpenAuthDialog = (redirectTo?: string, onAuthed?: PendingAction) => void;
 let busOpenFn: OpenAuthDialog | null = null;
+let pendingAction: PendingAction | null = null;
 
-export function openAuthDialog(redirectTo?: string): void {
+export function openAuthDialog(
+  redirectTo?: string,
+  onAuthed?: PendingAction,
+): void {
+  pendingAction = onAuthed ?? null;
   busOpenFn?.(redirectTo);
 }
 
@@ -74,15 +80,26 @@ export const AuthDialog: FC<{ children: ReactNode }> = ({ children }) => {
       } else {
         await router.invalidate();
       }
+
+      // Resume the action that triggered the dialog (e.g. the download).
+      const action = pendingAction;
+      pendingAction = null;
+      action?.();
     })();
   }, [queryClient, router]);
+
+  const handleOpenChange = useCallback((open: boolean) => {
+    setIsOpen(open);
+    // Dismissing the dialog must not leave a stale action behind.
+    if (!open) pendingAction = null;
+  }, []);
 
   const contextValue = useMemo(() => ({ openAuthDialog: openDialog }), [openDialog]);
 
   return (
     <AuthDialogContext.Provider value={contextValue}>
       {children}
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <Dialog open={isOpen} onOpenChange={handleOpenChange}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-info/10">
