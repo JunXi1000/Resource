@@ -15,9 +15,9 @@ body {
 
 .share-panel-gradient {
   background: linear-gradient(
-    90deg,
-    color-mix(in srgb, #efd5ff 68%, var(--background)) 0%,
-    color-mix(in srgb, #515ada 38%, var(--background)) 100%
+    135deg,
+    color-mix(in srgb, var(--accent) 60%, var(--background)) 0%,
+    var(--card) 70%
   );
 }
 

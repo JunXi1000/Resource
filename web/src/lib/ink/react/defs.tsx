@@ -73,7 +73,7 @@ function defsMarkup(kinds: ReadonlyArray<GrainMaskKind>, tiles: string): string 
   return s
 }
 
-export const KEVIN_SANS_CSS = "https://kevintngo.github.io/looseleaf/fonts/kevin-sans.css"
+export const KEVIN_SANS_CSS = "/fonts/kevin-sans.css"
 
 export function ensureInkFonts(): void {
   if (typeof document === "undefined" || document.querySelector("[data-ll-fonts]")) return
