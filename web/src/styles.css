@@ -249,10 +249,9 @@ code {
     --ll-tex-kraft: none;
 }
 
-/* Looseleaf paper theme (light mode only). Placed unlayered AFTER the default
-   :root so it wins in light mode; the .dark block below (later in the file)
-   wins back in dark mode, restoring the original dark palette. */
-html:not(.dark) {
+/* Looseleaf paper theme. Placed unlayered AFTER the default :root so it wins;
+   dark mode has been removed entirely (light-only paper theme). */
+:root {
   --background: var(--ll-desk);
   --foreground: var(--ll-ink);
   --card: var(--ll-paper);
@@ -286,55 +285,6 @@ html:not(.dark) {
   --sidebar-border: var(--ll-pad-rule);
   --sidebar-ring: var(--ll-focus);
   --radius: 3px;
-}
-
-.dark {
-  --background: oklch(0.1743 0.0227 283.7998);
-  --foreground: oklch(0.9185 0.0257 285.8834);
-  --card: oklch(0.2284 0.0384 282.9324);
-  --card-foreground: oklch(0.9185 0.0257 285.8834);
-  --popover: oklch(0.2284 0.0384 282.9324);
-  --popover-foreground: oklch(0.9185 0.0257 285.8834);
-  --primary: oklch(0.7162 0.1597 290.3962);
-  --primary-foreground: oklch(0.1743 0.0227 283.7998);
-  --secondary: oklch(0.3139 0.0736 283.4591);
-  --secondary-foreground: oklch(0.8367 0.0849 285.9111);
-  --muted: oklch(0.271 0.0621 281.4377);
-  --muted-foreground: oklch(0.7166 0.0462 285.1741);
-  --accent: oklch(0.3354 0.0828 280.9705);
-  --accent-foreground: oklch(0.9185 0.0257 285.8834);
-  --success: oklch(0.7226 0.1505 156.1059);
-  --success-foreground: oklch(0.2087 0.0426 166.1249);
-  --success-subtle: oklch(0.2621 0.0487 172.5522);
-  --success-subtle-foreground: oklch(0.9049 0.0895 164.1501);
-  --warning: oklch(0.8089 0.1449 75.6447);
-  --warning-foreground: oklch(0.2795 0.0727 62.8243);
-  --warning-subtle: oklch(0.2857 0.0639 53.8133);
-  --warning-subtle-foreground: oklch(0.9542 0.0372 75.1644);
-  --info: oklch(0.7005 0.1281 254.0918);
-  --info-foreground: oklch(0.2204 0.0561 260.6929);
-  --info-subtle: oklch(0.2935 0.0632 243.1571);
-  --info-subtle-foreground: oklch(0.9014 0.0555 230.9024);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(1 0 0);
-  --destructive-subtle: oklch(0.2575 0.0886 26.0418);
-  --destructive-subtle-foreground: oklch(0.8845 0.0593 18.3341);
-  --border: oklch(0.3261 0.0597 282.5832);
-  --input: oklch(0.3261 0.0597 282.5832);
-  --ring: oklch(0.7162 0.1597 290.3962);
-  --chart-1: oklch(0.7162 0.1597 290.3962);
-  --chart-2: oklch(0.7482 0.1235 213.0289);
-  --chart-3: oklch(0.8089 0.1449 75.6447);
-  --chart-4: oklch(0.7005 0.1281 254.0918);
-  --chart-5: oklch(0.7506 0.1831 353.312);
-  --sidebar: oklch(0.2284 0.0384 282.9324);
-  --sidebar-foreground: oklch(0.9185 0.0257 285.8834);
-  --sidebar-primary: oklch(0.7162 0.1597 290.3962);
-  --sidebar-primary-foreground: oklch(0.1743 0.0227 283.7998);
-  --sidebar-accent: oklch(0.3354 0.0828 280.9705);
-  --sidebar-accent-foreground: oklch(0.9185 0.0257 285.8834);
-  --sidebar-border: oklch(0.3261 0.0597 282.5832);
-  --sidebar-ring: oklch(0.7162 0.1597 290.3962);
 }
 
 @theme inline {
@@ -797,8 +747,8 @@ html:not(.dark) {
 @custom-variant calm (&:where([data-density="calm"], [data-density="calm"] *));
 
 @custom-variant compact (&:where([data-density="compact"], [data-density="compact"] *));
-  html:not(.dark) [data-theme],
-  html:not(.dark) [data-ll-scope] {
+  [data-theme],
+  [data-ll-scope] {
     --background: var(--ll-desk);
     --foreground: var(--ll-ink);
     --card: var(--ll-paper);

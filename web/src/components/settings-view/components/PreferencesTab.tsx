@@ -21,7 +21,7 @@ import { useTimeDisplay } from "@/components/time-display/hooks/useTimeDisplay.t
 
 export function PreferencesTab() {
   const { t, i18n } = useTranslation();
-  const { mode, colorTheme, setMode, setColorTheme } = useTheme();
+  const { colorTheme, setColorTheme } = useTheme();
   const { mode: timezone, setMode: setTimezone } = useTimeDisplay();
 
   const handleLanguageChange = (value: string) => {
@@ -35,12 +35,6 @@ export function PreferencesTab() {
     { value: "en", label: t("settings.language.english") },
     { value: "fr", label: t("settings.language.french") },
     { value: "de", label: t("settings.language.german") },
-  ];
-
-  const themeModes = [
-    { value: "light", label: t("settings.appearance.theme_mode.light") },
-    { value: "dark", label: t("settings.appearance.theme_mode.dark") },
-    { value: "system", label: t("settings.appearance.theme_mode.system") },
   ];
 
   const timezoneModes = [
@@ -58,26 +52,6 @@ export function PreferencesTab() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <Field orientation="horizontal" className="items-center!">
-            <FieldLabel className="sm:min-w-50">
-              {t("settings.appearance.theme_mode.label")}
-            </FieldLabel>
-            <FieldContent className="items-end">
-              <Select value={mode} onValueChange={setMode}>
-                <SelectTrigger className="w-full sm:w-50">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {themeModes.map((themeMode) => (
-                    <SelectItem key={themeMode.value} value={themeMode.value}>
-                      {themeMode.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </FieldContent>
-          </Field>
-
           <div className="space-y-2">
             <label className="text-sm font-medium">
               {t("settings.appearance.color_theme.label")}

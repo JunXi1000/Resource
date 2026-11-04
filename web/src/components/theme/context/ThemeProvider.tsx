@@ -3,14 +3,11 @@ import type { FC, ReactNode } from "react";
 import type { ColorTheme } from "@/components/theme/helpers/themes";
 import { loadTheme } from "@/components/theme/helpers/themes";
 
-type ThemeMode = "light" | "dark" | "system";
-
+// Looseleaf is a light-only paper theme. Dark mode was removed on purpose:
+// the app always renders the light paper palette regardless of OS preference.
 interface IThemeContext {
-  mode: ThemeMode;
   colorTheme: ColorTheme;
-  setMode: (mode: ThemeMode) => void;
   setColorTheme: (theme: ColorTheme) => void;
-  actualTheme: "light" | "dark";
 }
 
 export const ThemeContext = createContext<IThemeContext | undefined>(undefined);
@@ -20,43 +17,17 @@ interface IThemeProviderProps {
 }
 
 export const ThemeProvider: FC<IThemeProviderProps> = ({ children }) => {
-  const [mode, setModeState] = useState<ThemeMode>(() => {
-    const saved = localStorage.getItem("theme-mode");
-    return (saved as ThemeMode) || "system";
-  });
-
   const [colorTheme, setColorThemeState] = useState<ColorTheme>(() => {
     const saved = localStorage.getItem("color-theme");
     return (saved as ColorTheme) || "default";
   });
 
-  const [actualTheme, setActualTheme] = useState<"light" | "dark">("light");
-
   useEffect(() => {
-    const getSystemTheme = (): "light" | "dark" => {
-      return window.matchMedia("(prefers-color-scheme: dark)").matches
-        ? "dark"
-        : "light";
-    };
-
-    const updateTheme = () => {
-      const theme = mode === "system" ? getSystemTheme() : mode;
-      setActualTheme(theme);
-
-      const root = document.documentElement;
-      root.classList.remove("light", "dark");
-      root.classList.add(theme);
-    };
-
-    updateTheme();
-
-    if (mode === "system") {
-      const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-      const handler = () => updateTheme();
-      mediaQuery.addEventListener("change", handler);
-      return () => mediaQuery.removeEventListener("change", handler);
-    }
-  }, [mode]);
+    const root = document.documentElement;
+    root.classList.remove("dark");
+    root.classList.add("light");
+    localStorage.removeItem("theme-mode");
+  }, []);
 
   // Load color theme CSS
   useEffect(() => {
@@ -65,20 +36,13 @@ export const ThemeProvider: FC<IThemeProviderProps> = ({ children }) => {
     });
   }, [colorTheme]);
 
-  const setMode = (newMode: ThemeMode) => {
-    setModeState(newMode);
-    localStorage.setItem("theme-mode", newMode);
-  };
-
   const setColorTheme = (newTheme: ColorTheme) => {
     setColorThemeState(newTheme);
     localStorage.setItem("color-theme", newTheme);
   };
 
   return (
-    <ThemeContext.Provider
-      value={{ mode, colorTheme, setMode, setColorTheme, actualTheme }}
-    >
+    <ThemeContext.Provider value={{ colorTheme, setColorTheme }}>
       {children}
     </ThemeContext.Provider>
   );

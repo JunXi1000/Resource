@@ -3,7 +3,6 @@ import type { FC } from "react";
 import type { ColorTheme } from "@/components/theme/helpers/themes";
 import { themes } from "@/components/theme/helpers/themes";
 import { ThemePreview } from "@/components/theme/components/ThemePreview";
-import { useTheme } from "@/components/theme/hooks/useTheme";
 import { cn } from "@/lib/utils";
 
 interface IThemeSelectorProps {
@@ -12,8 +11,6 @@ interface IThemeSelectorProps {
 }
 
 export const ThemeSelector: FC<IThemeSelectorProps> = ({ value, onChange }) => {
-  const { actualTheme } = useTheme();
-
   return (
     <div className="grid grid-cols-3 gap-3">
       {(Object.keys(themes) as Array<ColorTheme>).map((themeKey) => {
@@ -35,7 +32,7 @@ export const ThemeSelector: FC<IThemeSelectorProps> = ({ value, onChange }) => {
             <div className="relative">
               <ThemePreview
                 theme={theme}
-                mode={actualTheme}
+                mode="light"
                 className="h-10 w-10"
               />
               {isSelected && (
