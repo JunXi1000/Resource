@@ -101,9 +101,23 @@ export function useLogout() {
   const { queryClient } = useRouteContext({ from: "__root__" });
 
   return useCallback(async () => {
-    await api.post("/auth/logout");
+    // Revoke the session server-side, but clear locally even if the call
+    // fails (offline, already-expired cookie) — a stuck "logged in" UI is
+    // worse than a stale cookie.
+    try {
+      await api.post("/auth/logout");
+    } catch {
+      // ignore — clear local state regardless
+    }
 
+    // Drop every user-scoped cache so the guest view shows empty states
+    // instead of the previous account's data. Public/config caches stay.
     queryClient.removeQueries({ queryKey: ["auth", "me"] });
+    queryClient.removeQueries({ queryKey: ["buckets"] });
+    queryClient.removeQueries({ queryKey: ["users"] });
+    queryClient.removeQueries({ queryKey: ["admin"] });
+    queryClient.removeQueries({ queryKey: ["mfa"] });
+
     router.update({
       context: {
         queryClient,
@@ -111,7 +125,10 @@ export function useLogout() {
       },
     });
 
-    router.navigate({ to: "/auth/login", search: { redirect: undefined } });
+    // Stay on the current page as a signed-out visitor; hard-gated routes
+    // (bucket detail, admin) re-run their guards and pop the sign-in
+    // dialog themselves. No jump to the login page.
+    await router.invalidate();
   }, [router, queryClient]);
 }
 
