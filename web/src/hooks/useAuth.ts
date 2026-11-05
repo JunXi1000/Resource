@@ -11,6 +11,7 @@ import {
 } from "@/lib/auth-service";
 import { meQueryOptions } from "@/queries/me";
 import { api } from "@/lib/api.ts";
+import { suppressAuthDialog } from "@/components/auth-view/auth-dialog-bus";
 
 export function useSession(): Session | null {
   const context = useRouteContext({ from: "__root__" });
@@ -96,22 +97,24 @@ export function useLogin() {
   };
 }
 
-export function useLogout() {
+/**
+ * Clear the signed-in state locally without touching the server: drop
+ * every user-scoped query cache (so the guest view shows empty states
+ * instead of the previous account's data), null the session context and
+ * revalidate the current route. Hard-gated routes re-run their guards
+ * and pop the sign-in dialog themselves. Callers use this after the
+ * server side of a sign-out (logout endpoint or session revocation).
+ */
+export function useSignOutLocally() {
   const router = useRouter();
   const { queryClient } = useRouteContext({ from: "__root__" });
 
   return useCallback(async () => {
-    // Revoke the session server-side, but clear locally even if the call
-    // fails (offline, already-expired cookie) — a stuck "logged in" UI is
-    // worse than a stale cookie.
-    try {
-      await api.post("/auth/logout");
-    } catch {
-      // ignore — clear local state regardless
-    }
+    // Sign-out is intentional: in-flight queries are about to fail with
+    // 401s whose handler would pop the sign-in dialog over the freshly
+    // signed-out guest view — swallow those for a short window.
+    suppressAuthDialog();
 
-    // Drop every user-scoped cache so the guest view shows empty states
-    // instead of the previous account's data. Public/config caches stay.
     queryClient.removeQueries({ queryKey: ["auth", "me"] });
     queryClient.removeQueries({ queryKey: ["buckets"] });
     queryClient.removeQueries({ queryKey: ["users"] });
@@ -125,11 +128,32 @@ export function useLogout() {
       },
     });
 
-    // Stay on the current page as a signed-out visitor; hard-gated routes
-    // (bucket detail, admin) re-run their guards and pop the sign-in
-    // dialog themselves. No jump to the login page.
     await router.invalidate();
+
+    // Pages whose content is entirely session-only (settings) would render
+    // blank for a guest — move to the public home view. Buckets re-run
+    // their guards (dialog is suppressed, so it is a plain redirect).
+    const path = router.state.location.pathname;
+    if (path.startsWith("/settings") || path.startsWith("/buckets")) {
+      await router.navigate({ to: "/", replace: true });
+    }
   }, [router, queryClient]);
+}
+
+export function useLogout() {
+  const signOutLocally = useSignOutLocally();
+
+  return useCallback(async () => {
+    // Revoke the session server-side, but clear locally even if the call
+    // fails (offline, already-expired cookie) — a stuck "logged in" UI is
+    // worse than a stale cookie.
+    try {
+      await api.post("/auth/logout");
+    } catch {
+      // ignore — clear local state regardless
+    }
+    await signOutLocally();
+  }, [signOutLocally]);
 }
 
 export function useRefreshSession() {

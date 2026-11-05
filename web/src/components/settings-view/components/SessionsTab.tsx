@@ -17,6 +17,7 @@ import {
   useRevokeSessionMutation,
   useSessionsQuery,
 } from "@/queries/user";
+import { useSignOutLocally } from "@/hooks/useAuth";
 
 interface SessionsTabProps {
   userId: string;
@@ -27,6 +28,7 @@ export function SessionsTab({ userId }: SessionsTabProps) {
   const { data, isLoading } = useSessionsQuery(userId);
   const revokeSession = useRevokeSessionMutation(userId);
   const revokeAll = useRevokeAllSessionsMutation(userId);
+  const signOutLocally = useSignOutLocally();
 
   const [revokeTarget, setRevokeTarget] = useState<string | null>(null);
   const [showRevokeAll, setShowRevokeAll] = useState(false);
@@ -138,7 +140,10 @@ export function SessionsTab({ userId }: SessionsTabProps) {
             revokeSession.mutate(revokeTarget, {
               onSuccess: () => {
                 if (isRevokingCurrent) {
-                  window.location.href = "/auth/login";
+                  // The session is gone server-side; clear the local
+                  // signed-in state in place instead of jumping to the
+                  // login page.
+                  void signOutLocally();
                 }
               },
             });
@@ -155,7 +160,11 @@ export function SessionsTab({ userId }: SessionsTabProps) {
         cancelLabel={t("common.cancel")}
         confirmLabel={t("settings.sessions.revoke_all")}
         onConfirm={() => {
-          revokeAll.mutate();
+          // Revoking every session also kills the current one — sign out
+          // locally in place as well.
+          revokeAll.mutate(undefined, {
+            onSuccess: () => void signOutLocally(),
+          });
           setShowRevokeAll(false);
         }}
       />

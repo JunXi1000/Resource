@@ -21,6 +21,14 @@ let pendingAction: PendingAction | null = null;
 // Requests made before the dialog mounts (e.g. route guards running in
 // beforeLoad on a hard page load) queue up and replay on registration.
 let queuedRequest: IAuthDialogRequest | null = null;
+// After an intentional sign-out, in-flight queries fail with 401s whose
+// handler would pop the dialog over the freshly signed-out guest view.
+// Swallow those for a short window.
+let suppressedUntil = 0;
+
+export function suppressAuthDialog(ms = 2500): void {
+  suppressedUntil = Date.now() + ms;
+}
 
 export function registerAuthDialogOpener(fn: OpenFn | null): void {
   openFn = fn;
@@ -32,6 +40,7 @@ export function registerAuthDialogOpener(fn: OpenFn | null): void {
 }
 
 export function requestAuthDialog(request: IAuthDialogRequest = {}): void {
+  if (Date.now() < suppressedUntil) return;
   pendingAction = request.onAuthed ?? null;
   if (openFn) {
     openFn(request);
